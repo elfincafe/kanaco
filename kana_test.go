@@ -1,4 +1,4 @@
-package kana
+package kanaco
 
 import (
 	"bytes"
