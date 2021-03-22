@@ -1,8 +1,13 @@
 package kanaco
 
-type Kanaco struct {
-	buf []byte
-	len uint64
+import (
+	"bufio"
+	"io"
+)
+
+type Reader struct {
+	r *bufio.Reader
+	mode string
 }
 
 var tbl map[string][]byte = map[string][]byte{
@@ -131,18 +136,73 @@ var tbl map[string][]byte = map[string][]byte{
 	"ﾞ": []byte{239, 190, 158}, "ﾟ": []byte{239, 190, 159},
 }
 
-func New(b []byte) *Kanaco {
-	k := new(Kanaco)
-	k.buf = b
-	k.len = uint64(len(k.buf))
-	return k
+
+func Byte (b []byte, mode string) []byte {
+	filters := map[byte]func([]byte) []byte{}
+	for _, m := range mode {
+		switch m {
+		case 'r':
+			filters['r'] = convAsSmallR
+		case 'R':
+			filters['R'] = convAsLargeR
+		case 'n':
+			filters['n'] = convAsSmallN
+		case 'N':
+			filters['N'] = convAsLargeN
+		case 'a':
+			filters['a'] = convAsSmallA
+		case 'A':
+			filters['A'] = convAsLargeA
+		case 's':
+			filters['s'] = convAsSmallS
+		case 'S':
+			filters['S'] = convAsLargeS
+		case 'k':
+			filters['k'] = convAsSmallK
+		case 'K':
+			filters['K'] = convAsLargeK
+		case 'h':
+			filters['h'] = convAsSmallH
+		case 'H':
+			filters['H'] = convAsLargeH
+		case 'c':
+			filters['c'] = convAsSmallC
+		case 'C':
+			filters['C'] = convAsLargeC
+		}
+	}
+	byteCount := uint64(len(b))
+	buf := make([]byte, 0, byteCount)
+	for i := uint64(0); i < byteCount; i++ {
+		c := make([]byte, 0, 6)
+		count := count(b[i:])
+		e := i + count
+		c = b[i:e]
+		for _, f := range filters {
+			c = f(c)
+		}
+		buf = append(buf, c...)
+		i += count - 1
+	}
+	return buf
 }
 
-func NewFromStr(s string) *Kanaco {
-	k := new(Kanaco)
-	k.buf = []byte(s)
-	k.len = uint64(len(k.buf))
-	return k
+func String (s string, mode string) string {
+	return string(Byte([]byte(s), mode))
+}
+
+func NewReader (r io.Reader, mode string) *Reader {
+	reader := new(Reader)
+	reader.r = bufio.NewReader(r)
+	reader.mode = mode
+	return reader
+}
+
+func (r *Reader) Read(p []byte) (int, error) {
+	line, err := r.r.ReadBytes('\n')
+	line = Byte(line, r.mode)
+	n := copy(p, line)
+	return n, err
 }
 
 func count(b []byte) uint64 {
@@ -177,59 +237,6 @@ func count(b []byte) uint64 {
 		return uint64(4)
 	}
 	return uint64(0)
-}
-
-func (k *Kanaco) Conv(mode string) []byte {
-	filters := map[byte]func([]byte) []byte{}
-	for _, m := range mode {
-		switch m {
-		case 'r':
-			filters['r'] = convAsSmallR
-		case 'R':
-			filters['R'] = convAsLargeR
-		case 'n':
-			filters['n'] = convAsSmallN
-		case 'N':
-			filters['N'] = convAsLargeN
-		case 'a':
-			filters['a'] = convAsSmallA
-		case 'A':
-			filters['A'] = convAsLargeA
-		case 's':
-			filters['s'] = convAsSmallS
-		case 'S':
-			filters['S'] = convAsLargeS
-		case 'k':
-			filters['k'] = convAsSmallK
-		case 'K':
-			filters['K'] = convAsLargeK
-		case 'h':
-			filters['h'] = convAsSmallH
-		case 'H':
-			filters['H'] = convAsLargeH
-		case 'c':
-			filters['c'] = convAsSmallC
-		case 'C':
-			filters['C'] = convAsLargeC
-		}
-	}
-	buf := make([]byte, 0, k.len)
-	for i := uint64(0); i < k.len; i++ {
-		c := make([]byte, 0, 6)
-		count := count(k.buf[i:])
-		e := i + count
-		c = k.buf[i:e]
-		for _, f := range filters {
-			c = f(c)
-		}
-		buf = append(buf, c...)
-		i += count - 1
-	}
-	return buf
-}
-
-func (k *Kanaco) ConvToStr(mode string) string {
-	return string(k.Conv(mode))
 }
 
 /**
@@ -302,7 +309,7 @@ func convAsSmallR(b []byte) []byte {
 		return []byte{b[2] - 96}
 	}
 	// ａ-ｚ -> a-z
-	if b[0] == 239 && b[1] == 189 && (b[2] >= 129 && b[2] <= 156) {
+	if b[0] == 239 && b[1] == 189 && (b[2] >= 129 && b[2] <= 154) {
 		return []byte{b[2] - 32}
 	}
 	return b
