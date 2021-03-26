@@ -64,6 +64,6 @@ func main () {
 ```
 
 ## License
-KanaCo is distributed by The MIT License.  
+KanaCo is distributed under The MIT License.  
 https://opensource.org/licenses/mit-license.php
 
