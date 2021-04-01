@@ -58,7 +58,7 @@ func main () {
         if err == io.EOF {
             break
         }
-        println(string(buf)) // カナコ コンバーター Ver1
+        println(string(buf)) // カナコ コンバｰタｰ Ver1
     }
 }
 ```
