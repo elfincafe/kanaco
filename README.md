@@ -19,12 +19,12 @@ KanaCo is the kana character converter inspired by the function mb_convert_kana 
 |A|Convert hankaku alphabets and numbers to zenkaku (U+0021 - U+007E excluding U+0022, U+0027, U+005C, U+007E)|
 |s|Convert zenkaku space to hankaku (U+3000 -> U+0020)|
 |S|Convert hankaku space to zenkaku (U+0020 -> U+3000)|
-|k|Convert zenkaku katakana to hankaku|
-|K|Convert hankaku katakana to zenkaku|
+|k|Convert zenkaku katakana to hankaku katakana|
+|K|Convert hankaku katakana to zenkaku katakana|
 |h|Convert zenkaku hiragana to hankaku katakana|
 |H|Convert hankaku katakana to zenkaku hiragana|
 |c|Convert zenkaku katakana to hankaku hiragana|
-|C|Convert hankaku katakana to zenkaku katakana|
+|C|Convert zenkaku hiragana to zenkaku katakana|
 
 ## Usage
 ```go
