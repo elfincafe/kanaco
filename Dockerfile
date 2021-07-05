@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3.14
 
 LABEL version="0.1.0"
 LABEL description="KanaCo Laibrary for Go"
@@ -16,3 +16,4 @@ RUN cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 RUN apk del tzdata
 RUN rm -f /var/cache/apk/*
 
+CMD ["/bin/sh"]
