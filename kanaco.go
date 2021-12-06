@@ -11,10 +11,16 @@ type Reader struct {
 	mode string
 }
 
-//type Writer struct {
-//	w    *io.Writer
-//	mode string
-//}
+type Writer struct {
+	w    *bufio.Writer
+	mode string
+}
+
+type word struct {
+	val []byte
+	one bool // 1byte character or not. (ex) ｶﾞ is false because of two characters.
+	len int
+}
 
 var tbl map[string][]byte = map[string][]byte{
 	"ぁ": {227, 129, 129}, "あ": {227, 129, 130},
@@ -143,51 +149,104 @@ var tbl map[string][]byte = map[string][]byte{
 }
 
 func Byte(b []byte, mode string) []byte {
-	filters := map[byte]func([]byte) []byte{}
-	for _, m := range mode {
+	orders1 := []byte{}
+	orders3 := []byte{}
+	filters1 := map[byte]func(w *word) []byte{}
+	filters3 := map[byte]func(w *word) []byte{}
+	for _, m := range []byte(mode) {
 		switch m {
 		case 'r':
-			filters['r'] = convAsSmallR
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters3[m] = convAsSmallR
+			}
 		case 'R':
-			filters['R'] = convAsLargeR
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeR
+			}
 		case 'n':
-			filters['n'] = convAsSmallN
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters3[m] = convAsSmallN
+			}
 		case 'N':
-			filters['N'] = convAsLargeN
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeN
+			}
 		case 'a':
-			filters['a'] = convAsSmallA
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters3[m] = convAsSmallA
+			}
 		case 'A':
-			filters['A'] = convAsLargeA
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeA
+			}
 		case 's':
-			filters['s'] = convAsSmallS
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters3[m] = convAsSmallS
+			}
 		case 'S':
-			filters['S'] = convAsLargeS
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeS
+			}
 		case 'k':
-			filters['k'] = convAsSmallK
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters3[m] = convAsSmallK
+			}
 		case 'K':
-			filters['K'] = convAsLargeK
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeK
+			}
 		case 'h':
-			filters['h'] = convAsSmallH
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters1[m] = convAsSmallH
+			}
 		case 'H':
-			filters['H'] = convAsLargeH
+			if _, ok := filters1[m]; !ok {
+				orders1 = append(orders1, m)
+				filters1[m] = convAsLargeH
+			}
 		case 'c':
-			filters['c'] = convAsSmallC
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters1[m] = convAsSmallC
+			}
 		case 'C':
-			filters['C'] = convAsLargeC
+			if _, ok := filters3[m]; !ok {
+				orders3 = append(orders3, m)
+				filters1[m] = convAsLargeC
+			}
 		}
 	}
 	byteCount := uint64(len(b))
 	buf := make([]byte, 0, byteCount)
 	for i := uint64(0); i < byteCount; i++ {
-		c := make([]byte, 0, 6)
-		count := count(b[i:])
-		e := i + count
-		c = b[i:e]
-		for _, f := range filters {
-			c = f(c)
+		word := extract(b[i:])
+		if word.len == 1 {
+			for _, f := range filters1 {
+				buf = append(buf, f(word)...)
+			}
+		} else if word.len == 3 || (word.len == 6 && !word.one) {
+			for _, f := range filters3 {
+				buf = append(buf, f(word)...)
+			}
+
+		} else if word.len >= 4 && word.len <= 6 {
+			buf = append(buf, word.val...)
+		} else {
+			i++
+			continue
 		}
-		buf = append(buf, c...)
-		i += count - 1
+		i += uint64(word.len) - 1
 	}
 	return buf
 }
@@ -235,163 +294,179 @@ func (r *Reader) Read(p []byte) (int, error) {
 //
 //}
 
-func count(b []byte) uint64 {
+func extract(b []byte) *word {
 	if b[0] < 128 { // 1byte
-		return uint64(1)
+		return &word{b[0:1], true, 1}
 	} else if b[0] < 192 {
-		return uint64(0)
+		return &word{b[0:0], true, 0}
 	} else if b[0] < 224 { // 2byte
-		return uint64(2)
+		return &word{b[0:2], true, 2}
 	} else if b[0] < 240 { // 3byte
 		if len(b) >= 6 {
 			if b[0] == 239 && b[1] == 189 {
 				if b[2] >= 182 && b[2] <= 191 { // カ・サ行
 					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return uint64(6)
+						return &word{b[0:6], false, 6}
 					}
 				}
 			} else if b[0] == 239 && b[1] == 190 {
 				if b[2] >= 128 && b[2] <= 132 { // タ行
 					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return uint64(6)
+						return &word{b[0:6], false, 6}
 					}
 				} else if b[2] >= 138 && b[2] <= 142 { // ハ行
 					if b[3] == 239 && b[4] == 190 && (b[5] == 158 || b[5] == 159) {
-						return uint64(6)
+						return &word{b[0:6], false, 6}
 					}
 				}
 			}
 		}
-		return uint64(3)
+		return &word{b[0:3], true, 3}
 	} else if b[0] < 248 { // 4byte
-		return uint64(4)
+		return &word{b[0:4], true, 4}
 	}
-	return uint64(0)
+	return &word{b[0:0], true, 0}
+}
+
+func isVoiced(w *word) bool {
+	if w.len == 6 && w.val[5] == 158 && w.val[4] == 190 && w.val[3] == 239 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isDevoiced(w *word) bool {
+	if w.len == 6 && w.val[5] == 159 && w.val[4] == 190 && w.val[3] == 239 {
+		return true
+	} else {
+		return false
+	}
 }
 
 /**
  * Hankaku Space -> Zenkaku Space
  */
-func convAsLargeS(b []byte) []byte {
-	if len(b) == 1 && b[0] == 32 {
+func convAsLargeS(w *word) []byte {
+	if w.len == 1 && w.val[0] == 32 {
 		return []byte{227, 128, 128}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Space -> Hankaku Space
  */
-func convAsSmallS(b []byte) []byte {
-	if len(b) == 3 && b[0] == 227 && b[1] == 128 && b[2] == 128 {
+func convAsSmallS(w *word) []byte {
+	if w.len == 3 && w.val[0] == 227 && w.val[1] == 128 && w.val[2] == 128 {
 		return []byte{32}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Numeric -> Zenkaku Numeric
  */
-func convAsLargeN(b []byte) []byte {
-	if len(b) == 1 && b[0] >= 48 && b[0] <= 57 {
-		return []byte{239, 188, 96 + b[0]}
+func convAsLargeN(w *word) []byte {
+	if w.len == 1 && w.val[0] >= 48 && w.val[0] <= 57 {
+		return []byte{239, 188, 96 + w.val[0]}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Numeric -> Hankaku Numeric
  */
-func convAsSmallN(b []byte) []byte {
-	if len(b) == 3 && b[0] == 239 && b[1] == 188 && (b[2] >= 144 && b[2] <= 153) {
-		return []byte{b[2] - 96}
+func convAsSmallN(w *word) []byte {
+	if w.len == 3 && w.val[0] == 239 && w.val[1] == 188 && (w.val[2] >= 144 && w.val[2] <= 153) {
+		return []byte{w.val[2] - 96}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Alphabet -> Zenkaku Alphabet
  */
-func convAsLargeR(b []byte) []byte {
-	if len(b) != 1 {
-		return b
+func convAsLargeR(w *word) []byte {
+	if w.len != 1 {
+		return w.val
 	}
 	// A-Z -> Ａ-Ｚ
-	if b[0] >= 65 && b[0] <= 90 {
-		return []byte{239, 188, 96 + b[0]}
+	if w.val[0] >= 65 && w.val[0] <= 90 {
+		return []byte{239, 188, 96 + w.val[0]}
 	}
 	// a-z -> ａ-ｚ
-	if b[0] >= 97 && b[0] <= 122 {
-		return []byte{239, 189, 32 + b[0]}
+	if w.val[0] >= 97 && w.val[0] <= 122 {
+		return []byte{239, 189, 32 + w.val[0]}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Alphabet -> Hankaku Alphabet
  */
-func convAsSmallR(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallR(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
 	// Ａ-Ｚ -> A-Z
-	if b[0] == 239 && b[1] == 188 && (b[2] >= 161 && b[2] <= 186) {
-		return []byte{b[2] - 96}
+	if w.val[0] == 239 && w.val[1] == 188 && (w.val[2] >= 161 && w.val[2] <= 186) {
+		return []byte{w.val[2] - 96}
 	}
 	// ａ-ｚ -> a-z
-	if b[0] == 239 && b[1] == 189 && (b[2] >= 129 && b[2] <= 154) {
-		return []byte{b[2] - 32}
+	if w.val[0] == 239 && w.val[1] == 189 && (w.val[2] >= 129 && w.val[2] <= 154) {
+		return []byte{w.val[2] - 32}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku AlphaNumeric -> Zenkaku AlphaNumeric
  * !-}(Excluding ",',\)
  */
-func convAsLargeA(b []byte) []byte {
-	if len(b) != 1 {
-		return b
+func convAsLargeA(w *word) []byte {
+	if w.len != 1 {
+		return w.val
 	}
-	if b[0] > 32 && b[0] < 96 {
-		if b[0] == 34 || b[0] == 39 || b[0] == 92 {
-			return b
+	if w.val[0] > 32 && w.val[0] < 96 {
+		if w.val[0] == 34 || w.val[0] == 39 || w.val[0] == 92 {
+			return w.val
 		}
-		return []byte{239, 188, 96 + b[0]}
-	} else if b[0] > 95 && b[0] < 126 {
-		return []byte{239, 189, 32 + b[0]}
+		return []byte{239, 188, 96 + w.val[0]}
+	} else if w.val[0] > 95 && w.val[0] < 126 {
+		return []byte{239, 189, 32 + w.val[0]}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku AlphaNumeric -> Hankaku AlphaNumeric
  * !-}(Excluding ",',\)
  */
-func convAsSmallA(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallA(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
 	// ！-＿ -> !-_
-	if b[0] == 239 && b[1] == 188 && (b[2] >= 129 && b[2] <= 191) {
-		return []byte{b[2] - 96}
+	if w.val[0] == 239 && w.val[1] == 188 && (w.val[2] >= 129 && w.val[2] <= 191) {
+		return []byte{w.val[2] - 96}
 	}
 	// ｀-｝ -> `-}
-	if b[0] == 239 && b[1] == 189 && (b[2] >= 128 && b[2] <= 157) {
-		return []byte{b[2] - 32}
+	if w.val[0] == 239 && w.val[1] == 189 && (w.val[2] >= 128 && w.val[2] <= 157) {
+		return []byte{w.val[2] - 32}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Katakana -> Hankaku Katakana
  */
-func convAsSmallK(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallK(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
-	if b[1] == 130 && b[0] == 227 {
-		switch b[2] {
+	if w.val[1] == 130 && w.val[0] == 227 {
+		switch w.val[2] {
 		case 161: // ァ
 			return tbl["ｧ"]
 		case 162: // ア
@@ -455,8 +530,8 @@ func convAsSmallK(b []byte) []byte {
 		case 191:
 			return tbl["ﾀ"] // タ
 		}
-	} else if b[1] == 131 && b[0] == 227 {
-		switch b[2] {
+	} else if w.val[1] == 131 && w.val[0] == 227 {
+		switch w.val[2] {
 		case 128:
 			return tbl["ﾀﾞ"] // ダ
 		case 129:
@@ -563,19 +638,18 @@ func convAsSmallK(b []byte) []byte {
 			return tbl["ｰ"] // ー
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Katakana
  */
-func convAsLargeK(b []byte) []byte {
-	len := len(b)
-	if len != 3 && len != 6 {
-		return b
+func convAsLargeK(w *word) []byte {
+	if w.len != 3 && w.len != 6 {
+		return w.val
 	}
-	if b[1] == 189 && b[0] == 239 {
-		switch b[2] {
+	if w.val[1] == 189 && w.val[0] == 239 {
+		switch w.val[2] {
 		case 166: // ｦ
 			return tbl["ヲ"]
 		case 167: // ｧ
@@ -609,83 +683,98 @@ func convAsLargeK(b []byte) []byte {
 		case 181: // ｵ
 			return tbl["オ"]
 		case 182: // ｶ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ガ"]
+			} else {
+				return tbl["カ"]
 			}
-			return tbl["カ"]
 		case 183: // ｷ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ギ"]
+			} else {
+				return tbl["キ"]
 			}
-			return tbl["キ"]
 		case 184: // ｸ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["グ"]
+			} else {
+				return tbl["ク"]
 			}
-			return tbl["ク"]
 		case 185: // ｹ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ゲ"]
+			} else {
+				return tbl["ケ"]
 			}
-			return tbl["ケ"]
 		case 186: // ｺ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ゴ"]
+			} else {
+				return tbl["コ"]
 			}
-			return tbl["コ"]
 		case 187: // ｻ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ザ"]
+			} else {
+				return tbl["サ"]
 			}
-			return tbl["サ"]
 		case 188: // ｼ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ジ"]
+			} else {
+				return tbl["シ"]
 			}
-			return tbl["シ"]
 		case 189: // ｽ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ズ"]
+			} else {
+				return tbl["ス"]
 			}
-			return tbl["ス"]
 		case 190: // ｾ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ゼ"]
+			} else {
+				return tbl["セ"]
 			}
-			return tbl["セ"]
 		case 191: // ｿ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ゾ"]
+			} else {
+				return tbl["ソ"]
 			}
-			return tbl["ソ"]
 		}
-	} else if b[1] == 190 && b[0] == 239 {
-		switch b[2] {
+	} else if w.val[1] == 190 && w.val[0] == 239 {
+		switch w.val[2] {
 		case 128: // ﾀ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ダ"]
+			} else {
+				return tbl["タ"]
 			}
-			return tbl["タ"]
 		case 129: // ﾁ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ヂ"]
+			} else {
+				return tbl["チ"]
 			}
-			return tbl["チ"]
 		case 130: // ﾂ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ヅ"]
+			} else {
+				return tbl["ツ"]
 			}
-			return tbl["ツ"]
 		case 131: // ﾃ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["デ"]
+			} else {
+				return tbl["テ"]
 			}
-			return tbl["テ"]
 		case 132: // ﾄ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ド"]
+			} else {
+				return tbl["ト"]
 			}
-			return tbl["ト"]
 		case 133: // ナ
 			return tbl["ナ"]
 		case 134: // ニ
@@ -697,37 +786,41 @@ func convAsLargeK(b []byte) []byte {
 		case 137: // ノ
 			return tbl["ノ"]
 		case 138: // ハ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["パ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["バ"]
+			} else {
+				return tbl["ハ"]
 			}
-			return tbl["ハ"]
 		case 139: // ヒ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ピ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ビ"]
+			} else {
+				return tbl["ヒ"]
 			}
-			return tbl["ヒ"]
 		case 140: // フ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["プ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ブ"]
+			} else {
+				return tbl["フ"]
 			}
-			return tbl["フ"]
 		case 141: // ヘ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ペ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ベ"]
+			} else {
+				return tbl["ヘ"]
 			}
-			return tbl["ヘ"]
 		case 142: // ホ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ポ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ボ"]
 			} else {
 				return tbl["ホ"]
@@ -764,19 +857,18 @@ func convAsLargeK(b []byte) []byte {
 			return tbl["ン"]
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Hiragana -> Hankaku Katakana
  */
-func convAsSmallH(b []byte) []byte {
-	len := len(b)
-	if len != 3 {
-		return b
+func convAsSmallH(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
-	if b[1] == 129 && b[0] == 227 {
-		switch b[2] {
+	if w.val[1] == 129 && w.val[0] == 227 {
+		switch w.val[2] {
 		case 129: // ぁ
 			return tbl["ｧ"]
 		case 130: // あ
@@ -904,8 +996,8 @@ func convAsSmallH(b []byte) []byte {
 		case 191: // み
 			return tbl["ﾐ"]
 		}
-	} else if b[1] == 130 && b[0] == 227 {
-		switch b[2] {
+	} else if w.val[1] == 130 && w.val[0] == 227 {
+		switch w.val[2] {
 		case 128: // む
 			return tbl["ﾑ"]
 		case 129: // め
@@ -945,22 +1037,21 @@ func convAsSmallH(b []byte) []byte {
 		case 147: // ん
 			return tbl["ﾝ"]
 		}
-	} else if b[2] == 188 && b[1] == 131 && b[0] == 227 {
+	} else if w.val[2] == 188 && w.val[1] == 131 && w.val[0] == 227 {
 		return tbl["ｰ"]
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Hiragana
  */
-func convAsLargeH(b []byte) []byte {
-	len := len(b)
-	if len != 3 && len != 6 {
-		return b
+func convAsLargeH(w *word) []byte {
+	if w.len != 3 && w.len != 6 {
+		return w.val
 	}
-	if b[1] == 189 && b[0] == 239 {
-		switch b[2] {
+	if w.val[1] == 189 && w.val[0] == 239 {
+		switch w.val[2] {
 		case 166: // ｦ
 			return tbl["を"]
 		case 167: // ｧ
@@ -994,83 +1085,98 @@ func convAsLargeH(b []byte) []byte {
 		case 181: // ｵ
 			return tbl["お"]
 		case 182: // ｶ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["が"]
+			} else {
+				return tbl["か"]
 			}
-			return tbl["か"]
 		case 183: // ｷ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ぎ"]
+			} else {
+				return tbl["き"]
 			}
-			return tbl["き"]
 		case 184: // ｸ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ぐ"]
+			} else {
+				return tbl["く"]
 			}
-			return tbl["く"]
 		case 185: // ｹ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["げ"]
+			} else {
+				return tbl["け"]
 			}
-			return tbl["け"]
 		case 186: // ｺ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ご"]
+			} else {
+				return tbl["こ"]
 			}
-			return tbl["こ"]
 		case 187: // ｻ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ざ"]
+			} else {
+				return tbl["さ"]
 			}
-			return tbl["さ"]
 		case 188: // ｼ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["じ"]
+			} else {
+				return tbl["し"]
 			}
-			return tbl["し"]
 		case 189: // ｽ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ず"]
+			} else {
+				return tbl["す"]
 			}
-			return tbl["す"]
 		case 190: // ｾ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ぜ"]
+			} else {
+				return tbl["せ"]
 			}
-			return tbl["せ"]
 		case 191: // ｿ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ぞ"]
+			} else {
+				return tbl["そ"]
 			}
-			return tbl["そ"]
 		}
-	} else if b[1] == 190 && b[0] == 239 {
-		switch b[2] {
+	} else if w.val[1] == 190 && w.val[0] == 239 {
+		switch w.val[2] {
 		case 128: // ﾀ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["だ"]
+			} else {
+				return tbl["た"]
 			}
-			return tbl["た"]
 		case 129: // ﾁ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ぢ"]
+			} else {
+				return tbl["ち"]
 			}
-			return tbl["ち"]
 		case 130: // ﾂ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["づ"]
+			} else {
+				return tbl["つ"]
 			}
-			return tbl["つ"]
 		case 131: // ﾃ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["で"]
+			} else {
+				return tbl["て"]
 			}
-			return tbl["て"]
 		case 132: // ﾄ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			if isVoiced(w) {
 				return tbl["ど"]
+			} else {
+				return tbl["と"]
 			}
-			return tbl["と"]
 		case 133: // ﾅ
 			return tbl["な"]
 		case 134: // ﾆ
@@ -1082,37 +1188,41 @@ func convAsLargeH(b []byte) []byte {
 		case 137: // ﾉ
 			return tbl["の"]
 		case 138: // ﾊ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ぱ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ば"]
+			} else {
+				return tbl["は"]
 			}
-			return tbl["は"]
 		case 139: // ﾋ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ぴ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["び"]
+			} else {
+				return tbl["ひ"]
 			}
-			return tbl["ひ"]
 		case 140: // ﾌ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ぷ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ぶ"]
+			} else {
+				return tbl["ふ"]
 			}
-			return tbl["ふ"]
 		case 141: // ﾍ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ぺ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["べ"]
+			} else {
+				return tbl["へ"]
 			}
-			return tbl["へ"]
 		case 142: // ﾎ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
+			if isDevoiced(w) {
 				return tbl["ぽ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
+			} else if isVoiced(w) {
 				return tbl["ぼ"]
 			} else {
 				return tbl["ほ"]
@@ -1149,53 +1259,51 @@ func convAsLargeH(b []byte) []byte {
 			return tbl["ん"]
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Katakana -> Zenkaku Hiragana
  */
-func convAsSmallC(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallC(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
-	if b[0] != 227 {
-		return b
-	}
-	if b[1] == 130 { // ァ-タ
-		if b[2] >= 161 && b[2] <= 191 {
-			return []byte{227, 129, b[2] - 32}
+	if w.val[0] == 227 {
+		if w.val[1] == 130 { // ァ-タ
+			if w.val[2] >= 161 && w.val[2] <= 191 {
+				return []byte{227, 129, w.val[2] - 32}
+			}
+		} else if w.val[1] == 131 { // ダ-ン
+			if w.val[2] >= 128 && w.val[2] <= 159 { // ダ-ミ
+				return []byte{227, 129, w.val[2] + 32}
+			} else if w.val[2] >= 160 && w.val[2] <= 179 { // ム-ン
+				return []byte{227, 130, w.val[2] - 32}
+			}
 		}
-	} else if b[1] == 131 { // ダ-ン
-		if b[2] >= 128 && b[2] <= 159 { // ダ-ミ
-			return []byte{227, 129, b[2] + 32}
-		} else if b[2] >= 160 && b[2] <= 179 { // ム-ン
-			return []byte{227, 130, b[2] - 32}
-		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Hiragana -> Zenkaku Katakana
  */
-func convAsLargeC(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsLargeC(w *word) []byte {
+	if w.len != 3 {
+		return w.val
 	}
-	if b[0] != 227 {
-		return b
-	}
-	if b[1] == 129 { // ぁ-み
-		if b[2] >= 129 && b[2] <= 159 { // ぁ-た
-			return []byte{227, 130, b[2] + 32}
-		} else if b[2] >= 160 && b[2] <= 191 { // だ-み
-			return []byte{227, 131, b[2] - 32}
+	if w.val[0] == 227 {
+		if w.val[1] == 129 { // ぁ-み
+			if w.val[2] >= 129 && w.val[2] <= 159 { // ぁ-た
+				return []byte{227, 130, w.val[2] + 32}
+			} else if w.val[2] >= 160 && w.val[2] <= 191 { // だ-み
+				return []byte{227, 131, w.val[2] - 32}
+			}
+		} else if w.val[1] == 130 { // む-ん
+			if w.val[2] >= 128 && w.val[2] <= 147 {
+				return []byte{227, 131, w.val[2] + 32}
+			}
 		}
-	} else if b[1] == 130 { // む-ん
-		if b[2] >= 128 && b[2] <= 147 {
-			return []byte{227, 131, b[2] + 32}
-		}
 	}
-	return b
+	return w.val
 }
