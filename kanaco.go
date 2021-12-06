@@ -232,11 +232,13 @@ func Byte(b []byte, mode string) []byte {
 	for i := uint64(0); i < byteCount; i++ {
 		word := extract(b[i:])
 		if word.len == 1 {
-			for _, f := range filters1 {
+			for _, ordr := range orders1 {
+				f := filters1[ordr]
 				buf = append(buf, f(word)...)
 			}
 		} else if word.len == 3 || (word.len == 6 && !word.one) {
-			for _, f := range filters3 {
+			for _, ordr := range orders3 {
+				f := filters3[ordr]
 				buf = append(buf, f(word)...)
 			}
 
