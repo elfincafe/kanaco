@@ -6,6 +6,18 @@ import (
 	"io"
 )
 
+const (
+	hankaku  = 1
+	zenkaku  = 2
+	space    = 4
+	numeric  = 8
+	alphabet = 16
+	kana     = 32
+	voiced   = 64
+	devoiced = 128
+	extra    = 8192
+)
+
 type Reader struct {
 	r    *bufio.Reader
 	mode string
@@ -17,9 +29,10 @@ type Writer struct {
 }
 
 type word struct {
-	val []byte
-	one bool // 1byte character or not. (ex) ｶﾞ is false because of two characters.
-	len int
+	val      []byte
+	one      bool // 1byte character or not. (ex) ｶﾞ is false because of two characters.
+	len      uint8
+	charType uint16
 }
 
 var tbl map[string][]byte = map[string][]byte{
@@ -297,37 +310,44 @@ func (r *Reader) Read(p []byte) (int, error) {
 //}
 
 func extract(b []byte) *word {
-	if b[0] < 128 { // 1byte
-		return &word{b[0:1], true, 1}
+	c := b[0]
+	if c < 33 { // 1byte control character, ", ', \, ~
+	} else if c >= 48 && c <= 57 {
+		return &word{b[0:1], true, 1, hankaku + numeric}
+	} else if c >= 33 && c <= 126 && c != 34 && c != 39 && c != 92 && c != 126 {
+		return &word{b[0:1], true, 1, hankaku + alphabet}
 	} else if b[0] < 192 {
-		return &word{b[0:0], true, 0}
+		return &word{b[0:0], true, 0, hankaku + extra}
 	} else if b[0] < 224 { // 2byte
-		return &word{b[0:2], true, 2}
+		return &word{b[0:2], true, 2, zenkaku + extra}
 	} else if b[0] < 240 { // 3byte
 		if len(b) >= 6 {
 			if b[0] == 239 && b[1] == 189 {
 				if b[2] >= 182 && b[2] <= 191 { // カ・サ行
 					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return &word{b[0:6], false, 6}
+						return &word{b[0:6], false, 6, hankaku + voiced}
 					}
 				}
 			} else if b[0] == 239 && b[1] == 190 {
 				if b[2] >= 128 && b[2] <= 132 { // タ行
 					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return &word{b[0:6], false, 6}
+						return &word{b[0:6], false, 6, hankaku + voiced}
 					}
 				} else if b[2] >= 138 && b[2] <= 142 { // ハ行
-					if b[3] == 239 && b[4] == 190 && (b[5] == 158 || b[5] == 159) {
-						return &word{b[0:6], false, 6}
+					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
+						return &word{b[0:6], false, 6, hankaku + voiced}
+					} else if b[3] == 239 && b[4] == 190 && b[5] == 159 {
+						return &word{b[0:6], false, 6, hankaku + devoiced}
 					}
 				}
 			}
+			return &word{b[0:6], false, 6, hankaku + extra}
 		}
-		return &word{b[0:3], true, 3}
+		return &word{b[0:3], true, 3, zenkaku + kana}
 	} else if b[0] < 248 { // 4byte
-		return &word{b[0:4], true, 4}
+		return &word{b[0:4], true, 4, zenkaku + extra}
 	}
-	return &word{b[0:0], true, 0}
+	return &word{b[0:0], true, 0, hankaku + extra}
 }
 
 func isVoiced(w *word) bool {
