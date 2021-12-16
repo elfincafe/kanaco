@@ -15,8 +15,7 @@ const (
 	kana     = 32
 	voiced   = 64
 	devoiced = 128
-	extra    = 4096
-	binary   = 8192
+	asIs     = 8192
 )
 
 type Reader struct {
@@ -68,7 +67,7 @@ var tbl map[string][]byte = map[string][]byte{
 	"ほ": {0xe3, 0x81, 0xbb}, "ぼ": {0xe3, 0x81, 0xbc}, "ぽ": {0xe3, 0x81, 0xbd},
 	"ま": {0xe3, 0x81, 0xbe},
 	"み": {0xe3, 0x81, 0xbf},
-	"む": {0xe3, 0x82, 128},
+	"む": {0xe3, 0x82, 0x80},
 	"め": {0xe3, 0x82, 0x81},
 	"も": {0xe3, 0x82, 0x82},
 	"ゃ": {0xe3, 0x82, 0x83}, "や": {0xe3, 0x82, 0x84},
@@ -100,7 +99,7 @@ var tbl map[string][]byte = map[string][]byte{
 	"ス": {0xe3, 0x82, 0xb9}, "ズ": {0xe3, 0x82, 0xba},
 	"セ": {0xe3, 0x82, 0xbb}, "ゼ": {0xe3, 0x82, 0xbc},
 	"ソ": {0xe3, 0x82, 0xbd}, "ゾ": {0xe3, 0x82, 0xbe},
-	"タ": {0xe3, 0x82, 0xbf}, "ダ": {0xe3, 0x83, 128},
+	"タ": {0xe3, 0x82, 0xbf}, "ダ": {0xe3, 0x83, 0x80},
 	"チ": {0xe3, 0x83, 0x81}, "ヂ": {0xe3, 0x83, 0x82},
 	"ッ": {0xe3, 0x83, 0x83}, "ツ": {0xe3, 0x83, 0x84}, "ヅ": {0xe3, 0x83, 0x85},
 	"テ": {0xe3, 0x83, 0x86}, "デ": {0xe3, 0x83, 0x87},
@@ -145,8 +144,8 @@ var tbl map[string][]byte = map[string][]byte{
 	"ｻ": {0xef, 0xbd, 0xbb}, "ｼ": {0xef, 0xbd, 0xbc}, "ｽ": {0xef, 0xbd, 0xbd}, "ｾ": {0xef, 0xbd, 0xbe}, "ｿ": {0xef, 0xbd, 0xbf},
 	"ｻﾞ": {0xef, 0xbd, 0xbb, 0xef, 0xbe, 0x9e}, "ｼﾞ": {0xef, 0xbd, 0xbc, 0xef, 0xbe, 0x9e}, "ｽﾞ": {0xef, 0xbd, 0xbd, 0xef, 0xbe, 0x9e},
 	"ｾﾞ": {0xef, 0xbd, 0xbe, 0xef, 0xbe, 0x9e}, "ｿﾞ": {0xef, 0xbd, 0xbf, 0xef, 0xbe, 0x9e},
-	"ﾀ": {0xef, 0xbe, 128}, "ﾁ": {0xef, 0xbe, 0x81}, "ﾂ": {0xef, 0xbe, 0x82}, "ﾃ": {0xef, 0xbe, 0x83}, "ﾄ": {0xef, 0xbe, 0x84},
-	"ﾀﾞ": {0xef, 0xbe, 128, 0xef, 0xbe, 0x9e}, "ﾁﾞ": {0xef, 0xbe, 0x81, 0xef, 0xbe, 0x9e}, "ﾂﾞ": {0xef, 0xbe, 0x82, 0xef, 0xbe, 0x9e},
+	"ﾀ": {0xef, 0xbe, 0x80}, "ﾁ": {0xef, 0xbe, 0x81}, "ﾂ": {0xef, 0xbe, 0x82}, "ﾃ": {0xef, 0xbe, 0x83}, "ﾄ": {0xef, 0xbe, 0x84},
+	"ﾀﾞ": {0xef, 0xbe, 0x80, 0xef, 0xbe, 0x9e}, "ﾁﾞ": {0xef, 0xbe, 0x81, 0xef, 0xbe, 0x9e}, "ﾂﾞ": {0xef, 0xbe, 0x82, 0xef, 0xbe, 0x9e},
 	"ﾃﾞ": {0xef, 0xbe, 0x83, 0xef, 0xbe, 0x9e}, "ﾄﾞ": {0xef, 0xbe, 0x84, 0xef, 0xbe, 0x9e},
 	"ﾅ": {0xef, 0xbe, 0x85}, "ﾆ": {0xef, 0xbe, 0x86}, "ﾇ": {0xef, 0xbe, 0x87}, "ﾈ": {0xef, 0xbe, 0x88}, "ﾉ": {0xef, 0xbe, 0x89},
 	"ﾊ": {0xef, 0xbe, 0x8a}, "ﾋ": {0xef, 0xbe, 0x8b}, "ﾌ": {0xef, 0xbe, 0x8c}, "ﾍ": {0xef, 0xbe, 0x8d}, "ﾎ": {0xef, 0xbe, 0x8e},
@@ -340,42 +339,80 @@ func is4Bytes(b []byte) bool {
 	}
 }
 
+func is3BytesNumeric(b []byte) bool {
+	if b[0] == 0xef && b[1] == 0xbc && b[2] > 0x8f && b[2] < 0x9a {
+		return true
+	} else {
+		return false
+	}
+}
+
+func is3BytesAlphabet(b []byte) bool {
+	if b[0] == 0xef {
+		if b[1] == 0xbc && b[2] > 0x99 && b[2] < 0xc0 {
+			return true
+		} else if b[1] == 0xbd&b[2] > 0x7f && b[2] < 0x9e {
+			return true
+		}
+	}
+	return false
+}
+
 func extract(b []byte) *word {
 	if is1Byte(b) {
-		if b[0] >= 0x30 && b[0] <= 0x39 {
+		if b[0] == 0x20 {
+			return &word{b[0:1], hankaku + space, 1}
+		} else if b[0] >= 0x30 && b[0] <= 0x39 {
 			return &word{b[0:1], hankaku + numeric, 1}
-		} else if b[0] >= 33 && b[0] <= 125 && b[0] != 34 && b[0] != 39 && b[0] != 92 {
+		} else if b[0] >= 0x21 && b[0] <= 0x7d && b[0] != 0x22 && b[0] != 0x27 && b[0] != 0x5c {
 			return &word{b[0:1], hankaku + alphabet, 1}
-		} else if b[0] < 128 {
-			return &word{b[0:1], hankaku + extra, 1}
+		} else if b[0] < 0x80 {
+			return &word{b[0:1], asIs, 1}
 		}
 	} else if is2Bytes(b) {
-		return &word{b[0:2], zenkaku + extra, 2}
+		return &word{b[0:2], asIs, 2}
 	} else if is3Bytes(b) {
-		if b[0] == 0xef && b[1] == 0xbd {
-			if b[2] >= 0xb6 && b[2] <= 0xbf { // カ・サ行
-				if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-					return &word{b[0:6], hankaku + voiced, 6}
-				}
+		if is3BytesNumeric(b) {
+			return &word{b[0:3], zenkaku + numeric, 3}
+		} else if is3BytesAlphabet(b) {
+			return &word{b[0:3], zenkaku + alphabet, 3}
+		} else if len(b) >= 6 && b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+			if b[0] == 0xef && b[1] == 0xbd && b[2] > 0xb5 && b[2] < 0xc0 { // カ・サ行
+				return &word{b[0:6], hankaku + kana + voiced, 6}
+			} else if b[0] == 0xef && b[1] == 0xbe && b[2] > 0x80 && b[2] < 0x84 { // タ行
+				return &word{b[0:6], hankaku + kana + voiced, 6}
+			} else if b[0] == 0xef && b[1] == 0xbe && b[2] > 0x89 && b[2] < 0x8f { // ハ行
+				return &word{b[0:6], hankaku + kana + voiced, 6}
 			}
-		} else if b[0] == 0xef && b[1] == 0xbe {
-			if b[2] >= 128 && b[2] <= 0x84 { // タ行
-				if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-					return &word{b[0:6], hankaku + voiced, 6}
-				}
-			} else if b[2] >= 0x8a && b[2] <= 0x8e { // ハ行
-				if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-					return &word{b[0:6], hankaku + voiced, 6}
-				} else if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
-					return &word{b[0:6], hankaku + devoiced, 6}
-				}
-			}
+		} else if len(b) >= 6 && b[0] == 0xef && b[1] == 0xbe && b[2] > 0x89 && b[2] < 0x8f && b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
+			return &word{b[0:6], hankaku + kana + devoiced, 6}
+		} else if is3BytesKana(b) {
+			return &word{b[0:3], zenkaku + kana, 3}
 		}
-		return &word{b[0:3], zenkaku + extra, 3}
+		// if b[0] == 0xef && b[1] == 0xbd {
+		// 	if b[2] >= 0xb6 && b[2] <= 0xbf { // カ・サ行
+		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+		// 			return &word{b[0:6], hankaku + voiced, 6}
+		// 		}
+		// 	}
+		// } else if b[0] == 0xef && b[1] == 0xbe {
+		// 	if b[2] >= 0x80 && b[2] <= 0x84 { // タ行
+		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+		// 			return &word{b[0:6], hankaku + voiced, 6}
+		// 		}
+		// 	} else if b[2] >= 0x8a && b[2] <= 0x8e { // ハ行
+		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+		// 			return &word{b[0:6], hankaku + voiced, 6}
+		// 		} else if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
+		// 			return &word{b[0:6], hankaku + devoiced, 6}
+		// 		}
+		// 	}
+		// }
+		return &word{b[0:3], asIs, 3}
 	} else if is4Bytes(b) {
-		return &word{b[0:4], zenkaku + extra, 4}
+		return &word{b[0:4], asIs, 4}
 	}
-	return &word{b[0:1], binary, 1}
+	return &word{b[0:1], asIs, 1}
 }
 
 func isVoiced(w *word) bool {
@@ -399,7 +436,7 @@ func isDevoiced(w *word) bool {
  */
 func convAsLargeS(w *word) []byte {
 	if w.len == 1 && w.val[0] == 32 {
-		return []byte{0xe3, 128, 128}
+		return []byte{0xe3, 0x80, 0x80}
 	}
 	return w.val
 }
@@ -408,7 +445,7 @@ func convAsLargeS(w *word) []byte {
  * Zenkaku Space -> Hankaku Space
  */
 func convAsSmallS(w *word) []byte {
-	if w.len == 3 && w.val[0] == 0xe3 && w.val[1] == 128 && w.val[2] == 128 {
+	if w.len == 3 && w.val[0] == 0xe3 && w.val[1] == 0x80 && w.val[2] == 0x80 {
 		return []byte{32}
 	}
 	return w.val
@@ -502,7 +539,7 @@ func convAsSmallA(w *word) []byte {
 		return []byte{w.val[2] - 96}
 	}
 	// ｀-｝ -> `-}
-	if w.val[0] == 0xef && w.val[1] == 0xbd && (w.val[2] >= 128 && w.val[2] <= 0x9d) {
+	if w.val[0] == 0xef && w.val[1] == 0xbd && (w.val[2] >= 0x80 && w.val[2] <= 0x9d) {
 		return []byte{w.val[2] - 32}
 	}
 	return w.val
@@ -582,7 +619,7 @@ func convAsSmallK(w *word) []byte {
 		}
 	} else if w.val[1] == 0x83 && w.val[0] == 0xe3 {
 		switch w.val[2] {
-		case 128:
+		case 0x80:
 			return tbl["ﾀﾞ"] // ダ
 		case 0x81:
 			return tbl["ﾁ"] // チ
@@ -795,7 +832,7 @@ func convAsLargeK(w *word) []byte {
 		}
 	} else if w.val[1] == 0xbe && w.val[0] == 0xef {
 		switch w.val[2] {
-		case 128: // ﾀ
+		case 0x80: // ﾀ
 			if isVoiced(w) {
 				return tbl["ダ"]
 			} else {
@@ -1048,7 +1085,7 @@ func convAsSmallH(w *word) []byte {
 		}
 	} else if w.val[1] == 0x82 && w.val[0] == 0xe3 {
 		switch w.val[2] {
-		case 128: // む
+		case 0x80: // む
 			return tbl["ﾑ"]
 		case 0x81: // め
 			return tbl["ﾒ"]
@@ -1197,7 +1234,7 @@ func convAsLargeH(w *word) []byte {
 		}
 	} else if w.val[1] == 0xbe && w.val[0] == 0xef {
 		switch w.val[2] {
-		case 128: // ﾀ
+		case 0x80: // ﾀ
 			if isVoiced(w) {
 				return tbl["だ"]
 			} else {
@@ -1325,7 +1362,7 @@ func convAsSmallC(w *word) []byte {
 				return []byte{0xe3, 0x81, w.val[2] - 32}
 			}
 		} else if w.val[1] == 0x83 { // ダ-ン
-			if w.val[2] >= 128 && w.val[2] <= 0x9f { // ダ-ミ
+			if w.val[2] >= 0x80 && w.val[2] <= 0x9f { // ダ-ミ
 				return []byte{0xe3, 0x81, w.val[2] + 32}
 			} else if w.val[2] >= 0xa0 && w.val[2] <= 0xb3 { // ム-ン
 				return []byte{0xe3, 0x82, w.val[2] - 32}
@@ -1350,7 +1387,7 @@ func convAsLargeC(w *word) []byte {
 				return []byte{0xe3, 0x83, w.val[2] - 32}
 			}
 		} else if w.val[1] == 0x82 { // む-ん
-			if w.val[2] >= 128 && w.val[2] <= 0x93 {
+			if w.val[2] >= 0x80 && w.val[2] <= 0x93 {
 				return []byte{0xe3, 0x83, w.val[2] + 32}
 			}
 		}
