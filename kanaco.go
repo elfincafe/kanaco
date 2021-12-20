@@ -12,9 +12,10 @@ const (
 	space    = 4
 	numeric  = 8
 	alphabet = 16
-	kana     = 32
-	voiced   = 64
-	devoiced = 128
+	hiragana = 32
+	katakana = 64
+	voiced   = 128
+	devoiced = 256
 	asIs     = 8192
 )
 
@@ -248,7 +249,7 @@ func Byte(b []byte, mode string) []byte {
 				f := filters1[ordr]
 				buf = append(buf, f(word)...)
 			}
-		} else if word.len == 3 || (word.len == 6 && !word.one) {
+		} else if word.len == 3 || word.len == 6 {
 			for _, ordr := range orders3 {
 				f := filters3[ordr]
 				buf = append(buf, f(word)...)
@@ -339,25 +340,77 @@ func is4Bytes(b []byte) bool {
 	}
 }
 
-func is3BytesNumeric(b []byte) bool {
-	if b[0] == 0xef && b[1] == 0xbc && b[2] > 0x8f && b[2] < 0x9a {
+func isVoiced(w *word) bool {
+	if w.charType&voiced == voiced {
 		return true
 	} else {
 		return false
 	}
 }
 
-func is3BytesAlphabet(b []byte) bool {
-	if b[0] == 0xef {
-		if b[1] == 0xbc && b[2] > 0x99 && b[2] < 0xc0 {
-			return true
-		} else if b[1] == 0xbd&b[2] > 0x7f && b[2] < 0x9e {
-			return true
-		}
+func isDevoiced(w *word) bool {
+	if w.charType&devoiced == devoiced {
+		return true
+	} else {
+		return false
 	}
-	return false
 }
 
+func isSpace(w *word) bool {
+	if w.charType&space == space {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isNumeric(w *word) bool {
+	if w.charType&numeric == numeric {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isAlphabet(w *word) bool {
+	if w.charType&alphabet == alphabet {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isHankaku(w *word) bool {
+	if w.charType&hankaku == hankaku {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isZenkaku(w *word) bool {
+	if w.charType&zenkaku == zenkaku {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isHiragana(w *word) bool {
+	if w.charType&hiragana == hiragana {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isKatakana(w *word) bool {
+	if w.charType&katakana == katakana {
+		return true
+	} else {
+		return false
+	}
+}
 func extract(b []byte) *word {
 	if is1Byte(b) {
 		if b[0] == 0x20 {
@@ -372,42 +425,73 @@ func extract(b []byte) *word {
 	} else if is2Bytes(b) {
 		return &word{b[0:2], asIs, 2}
 	} else if is3Bytes(b) {
-		if is3BytesNumeric(b) {
-			return &word{b[0:3], zenkaku + numeric, 3}
-		} else if is3BytesAlphabet(b) {
-			return &word{b[0:3], zenkaku + alphabet, 3}
-		} else if len(b) >= 6 && b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-			if b[0] == 0xef && b[1] == 0xbd && b[2] > 0xb5 && b[2] < 0xc0 { // カ・サ行
-				return &word{b[0:6], hankaku + kana + voiced, 6}
-			} else if b[0] == 0xef && b[1] == 0xbe && b[2] > 0x80 && b[2] < 0x84 { // タ行
-				return &word{b[0:6], hankaku + kana + voiced, 6}
-			} else if b[0] == 0xef && b[1] == 0xbe && b[2] > 0x89 && b[2] < 0x8f { // ハ行
-				return &word{b[0:6], hankaku + kana + voiced, 6}
+		if b[0] == 0xef {
+			switch b[1] {
+			case 0xbc:
+				if b[2] >= 90 && b[2] <= 99 {
+					return &word{b[0:3], zenkaku + numeric, 3}
+				} else if b[2] >= 0xbc && b[2] == 0xbf && b[2] != 0x82 && b[2] != 0x87 && b[2] != 0xbc {
+					return &word{b[0:3], zenkaku + alphabet, 3}
+				}
+			case 0xbd:
+				if b[2] >= 0x80 && b[2] <= 0x9d { // ｀ ～ ｝
+					return &word{b[0:3], zenkaku + alphabet, 3}
+				} else if b[2] >= 0xa6 && b[2] <= 0xbf {
+					if len(b) >= 6 {
+						if b[2] >= 0xb6 && b[2] <= 0xbf { // ｶ ～ ｿ
+							if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e { // 濁点
+								return &word{b[0:6], hankaku + katakana + voiced, 6}
+							}
+						}
+					}
+					return &word{b[0:3], hankaku + katakana, 3}
+				}
+			case 0xbe:
+				if b[2] >= 0x80 && b[2] <= 0x84 { // ﾀ ～ ﾄ
+					if len(b) >= 6 {
+						if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+							return &word{b[0:6], hankaku + katakana + voiced, 6}
+						}
+					}
+					return &word{b[0:3], hankaku + katakana, 3}
+				} else if b[2] >= 0x8a && b[2] <= 0x8d { // ﾊ ～ ﾎ
+					if len(b) >= 6 {
+						if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+							return &word{b[0:6], hankaku + katakana + voiced, 6}
+						} else if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
+							return &word{b[0:6], hankaku + katakana + devoiced, 6}
+						}
+					}
+					return &word{b[0:3], hankaku + katakana, 3}
+				} else if b[2] >= 0x85 && b[2] <= 0x9d { // ﾅ ～ ﾝ
+					return &word{b[0:3], hankaku + katakana, 3}
+				}
 			}
-		} else if len(b) >= 6 && b[0] == 0xef && b[1] == 0xbe && b[2] > 0x89 && b[2] < 0x8f && b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
-			return &word{b[0:6], hankaku + kana + devoiced, 6}
-		} else if is3BytesKana(b) {
-			return &word{b[0:3], zenkaku + kana, 3}
+			return &word{b[0:3], asIs, 3}
+		} else if b[0] == 0xe3 {
+			// 全ひら・全カタ・全スペース
+			switch b[1] {
+			case 0x80:
+				if b[2] == 0x80 { // スペース
+					return &word{b[0:3], zenkaku + space, 3}
+				}
+			case 0x81:
+				if b[2] >= 0x81 && b[2] <= 0xbf { // ぁ ～ み
+					return &word{b[0:3], zenkaku + hiragana, 3}
+				}
+			case 0x82:
+				if b[2] >= 0x80 && b[2] <= 0x93 { // む ～ ん
+					return &word{b[0:3], zenkaku + hiragana, 3}
+				} else if b[2] >= 0xa1 && b[2] <= 0xbf { // ァ ～ タ
+					return &word{b[0:3], zenkaku + katakana, 3}
+				}
+			case 0x83:
+				if b[2] >= 0x80 && b[2] <= 0xb3 { // チ ～ ン
+					return &word{b[0:3], zenkaku + katakana, 3}
+				}
+			}
+			return &word{b[0:3], asIs, 3}
 		}
-		// if b[0] == 0xef && b[1] == 0xbd {
-		// 	if b[2] >= 0xb6 && b[2] <= 0xbf { // カ・サ行
-		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-		// 			return &word{b[0:6], hankaku + voiced, 6}
-		// 		}
-		// 	}
-		// } else if b[0] == 0xef && b[1] == 0xbe {
-		// 	if b[2] >= 0x80 && b[2] <= 0x84 { // タ行
-		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-		// 			return &word{b[0:6], hankaku + voiced, 6}
-		// 		}
-		// 	} else if b[2] >= 0x8a && b[2] <= 0x8e { // ハ行
-		// 		if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
-		// 			return &word{b[0:6], hankaku + voiced, 6}
-		// 		} else if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
-		// 			return &word{b[0:6], hankaku + devoiced, 6}
-		// 		}
-		// 	}
-		// }
 		return &word{b[0:3], asIs, 3}
 	} else if is4Bytes(b) {
 		return &word{b[0:4], asIs, 4}
@@ -415,47 +499,33 @@ func extract(b []byte) *word {
 	return &word{b[0:1], asIs, 1}
 }
 
-func isVoiced(w *word) bool {
-	if w.len == 6 && w.val[5] == 0x9e && w.val[4] == 0xbe && w.val[3] == 0xef {
-		return true
-	} else {
-		return false
-	}
-}
-
-func isDevoiced(w *word) bool {
-	if w.len == 6 && w.val[5] == 0x9f && w.val[4] == 0xbe && w.val[3] == 0xef {
-		return true
-	} else {
-		return false
-	}
-}
-
 /**
  * Hankaku Space -> Zenkaku Space
  */
 func convAsLargeS(w *word) []byte {
-	if w.len == 1 && w.val[0] == 32 {
+	if isHankaku(w) && isSpace(w) {
 		return []byte{0xe3, 0x80, 0x80}
+	} else {
+		return w.val
 	}
-	return w.val
 }
 
 /**
  * Zenkaku Space -> Hankaku Space
  */
 func convAsSmallS(w *word) []byte {
-	if w.len == 3 && w.val[0] == 0xe3 && w.val[1] == 0x80 && w.val[2] == 0x80 {
+	if isZenkaku(w) && isSpace(w) {
 		return []byte{32}
+	} else {
+		return w.val
 	}
-	return w.val
 }
 
 /**
  * Hankaku Numeric -> Zenkaku Numeric
  */
 func convAsLargeN(w *word) []byte {
-	if w.len == 1 && w.val[0] >= 48 && w.val[0] <= 57 {
+	if isHankaku(w) && isNumeric(w) {
 		return []byte{0xef, 0xbc, 96 + w.val[0]}
 	}
 	return w.val
@@ -465,19 +535,17 @@ func convAsLargeN(w *word) []byte {
  * Zenkaku Numeric -> Hankaku Numeric
  */
 func convAsSmallN(w *word) []byte {
-	if w.len == 3 && w.val[0] == 0xef && w.val[1] == 0xbc && (w.val[2] >= 0x90 && w.val[2] <= 0x99) {
+	if isZenkaku(w) && isNumeric(w) {
 		return []byte{w.val[2] - 96}
+	} else {
+		return w.val
 	}
-	return w.val
 }
 
 /**
  * Hankaku Alphabet -> Zenkaku Alphabet
  */
 func convAsLargeR(w *word) []byte {
-	if w.len != 1 {
-		return w.val
-	}
 	// A-Z -> Ａ-Ｚ
 	if w.val[0] >= 65 && w.val[0] <= 90 {
 		return []byte{0xef, 0xbc, 96 + w.val[0]}
@@ -770,37 +838,37 @@ func convAsLargeK(w *word) []byte {
 		case 0xb5: // ｵ
 			return tbl["オ"]
 		case 0xb6: // ｶ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["ガ"]
 			} else {
 				return tbl["カ"]
 			}
 		case 0xb7: // ｷ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["ギ"]
 			} else {
 				return tbl["キ"]
 			}
 		case 0xb8: // ｸ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["グ"]
 			} else {
 				return tbl["ク"]
 			}
 		case 0xb9: // ｹ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["ゲ"]
 			} else {
 				return tbl["ケ"]
 			}
 		case 0xba: // ｺ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["ゴ"]
 			} else {
 				return tbl["コ"]
 			}
 		case 0xbb: // ｻ
-			if isVoiced(w) {
+			if w.charType&voiced == voiced {
 				return tbl["ザ"]
 			} else {
 				return tbl["サ"]
