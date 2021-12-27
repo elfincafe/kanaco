@@ -2,7 +2,9 @@ package kanaco
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -66,188 +68,107 @@ var ms [][2]string = [][2]string{
 
 var mode []string = []string{
 	"r", "R", "n", "N", "a", "A", "s", "S", "k", "K", "h", "H", "c", "C",
-//	"r",
 }
 
-func createInput() string {
-	s := strings.Builder{}
-	for _, v := range ks {
-		s.WriteString(v[0])
-		s.WriteString(v[1])
-		s.WriteString(v[2])
-	}
-	for _, v1 := range [][][2]string{ss, ns, as, ms} {
-		for _, v2 := range v1 {
-			s.WriteString(v2[0])
-			s.WriteString(v2[1])
+func createInput() []string {
+	f, _ := os.Open("./data/input.txt")
+	tmp, _ := ioutil.ReadAll(f)
+	buf := make([]string, 0, len(tmp))
+	for _, v := range strings.Split(string(tmp), "") {
+		k := len(buf)
+		if k > 0 && (v == "ﾞ" || v == "ﾟ") {
+			buf[k-1] += v
+			continue
 		}
+		buf = append(buf, v)
 	}
-	return s.String()
+	return buf
 }
 
-func createExpected(s string, mode string) string {
-	for _, m := range mode {
-		switch m {
-		case 'r':
-			for _, v := range as {
-				s = strings.ReplaceAll(s, v[1], v[0])
-			}
-		case 'R':
-			for _, v := range as {
-				s = strings.ReplaceAll(s, v[0], v[1])
-			}
-		case 'n':
-			for _, v := range ns {
-				s = strings.ReplaceAll(s, v[1], v[0])
-			}
-		case 'N':
-			for _, v := range ns {
-				s = strings.ReplaceAll(s, v[0], v[1])
-			}
-		case 'a':
-			for _, v1 := range [][][2]string{ms,ns,as} {
-				for _,v2 := range v1 {
-					s = strings.ReplaceAll(s, v2[1], v2[0])
-				}
-			}
-		case 'A':
-			for _, v1 := range [][][2]string{ms,ns,as} {
-				for _,v2 := range v1 {
-					s = strings.ReplaceAll(s, v2[0], v2[1])
-				}
-			}
-		case 's':
-			for _, v := range ss {
-				s = strings.ReplaceAll(s, v[1], v[0])
-			}
-		case 'S':
-			for _, v := range ss {
-				s = strings.ReplaceAll(s, v[0], v[1])
-			}
-		case 'k':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[1], v[0])
-			}
-		case 'K':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[0], v[1])
-			}
-		case 'h':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[2], v[0])
-			}
-		case 'H':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[0], v[2])
-			}
-		case 'c':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[1], v[2])
-			}
-		case 'C':
-			cnt := len(ks) - 1
-			for i:=cnt; i>=0; i-- {
-				v := ks[i]
-				s = strings.ReplaceAll(s, v[2], v[1])
-			}
-		}
+func createExpected(str []string, mode string) []string {
+	path := fmt.Sprintf("./data/output.%s.txt", mode)
+	println(path)
+	f, err := os.Open(path)
+	if err != nil {
+		return []string{}
 	}
-	return s
+	tmp, _ := ioutil.ReadAll(f)
+	buf := make([]string, 0, len(tmp))
+	for _, v := range strings.Split(string(tmp), "") {
+		k := len(buf)
+		if k > 0 && (v == "ﾞ" || v == "ﾟ") {
+			buf[k-1] += v
+			continue
+		}
+		buf = append(buf, v)
+	}
+	return buf
 }
 
 func TestByte(t *testing.T) {
-	s := createInput()
+	str := createInput()
 	for _, m := range mode {
-		ret := Byte([]byte(s), m)
-		expected := createExpected(s, m)
-		for k, v := range string(ret) {
-			println(v)
-			if strings.Equal(expected[k])!=v {
-				t.Errorf("[Byte] Fail to convert. (%s mode)\nExpected: %c\nReturned: %c\n", m, expected[k], v)
-				os.Exit(123)
+		ret := Byte([]byte(strings.Join(str, "")), m)
+		expected := createExpected(str, m)
+		fmt.Println("<", string(ret), ">")
+		fmt.Println("*", strings.Join(expected, ""), "*")
+		os.Exit(123)
+		for k, v := range strings.Split(string(ret), "") {
+			if !bytes.Equal([]byte(expected[k]), []byte(v)) {
+				t.Errorf("[Byte] Fail to convert. (%s mode)\nExpected: %s\nReturned: %s\n", m, expected[k], v)
 			}
 		}
+		break
 	}
+	os.Exit(123)
 }
 
 func TestString(t *testing.T) {
-	s := createInput()
+	str := createInput()
 	for _, m := range mode {
-		ret := String(s, m)
-		expected := []rune(createExpected(s, m))
-		for k, v := range []rune(string(ret)) {
-			if expected[k]!=v {
-				t.Errorf("[String] Fail to convert. (%s mode)\nExpected: %c\nReturned: %c\n", m, expected[k], v)
+		ret := String(strings.Join(str, ""), m)
+		expected := createExpected(str, m)
+		for k, v := range strings.Split(string(ret), "") {
+			if !bytes.Equal([]byte(expected[k]), []byte(v)) {
+				t.Errorf("[String] Fail to convert. (%s mode)\nExpected: %s\nReturned: %s\n", m, expected[k], v)
 			}
 		}
+		break
 	}
 }
 
-func TestReaderRead (t *testing.T) {
-	dir := os.TempDir()
-	f, err := os.CreateTemp(dir, "TestNewReader.*.txt")
-	if err != nil {
-		t.Errorf("[NewReader] Fail to create test file.")
-	}
-	s := createInput()
-	s = strings.ReplaceAll(s, "ァ", "\nァ")
-	s = strings.ReplaceAll(s, "あ", "\nあ")
-	s = strings.ReplaceAll(s, "z", "\nz")
-	s = strings.ReplaceAll(s, "5", "\n5")
-	f.WriteString(s)
-	path := f.Name()
-	f.Close()
-	defer os.Remove(path)
-
+func TestReaderRead(t *testing.T) {
 	for _, m := range mode {
-		f, err = os.Open(path)
+		f, err := os.Open("./test_data.txt")
 		if err != nil {
 			t.Errorf("[NewReader] Fail to open test file.")
 		}
 		r := NewReader(f, m)
-		expected := createExpected(s, m)
-		expected = strings.ReplaceAll(expected, "ァ", "\nァ")
-		expected = strings.ReplaceAll(expected, "あ", "\nあ")
-		expected = strings.ReplaceAll(expected, "z", "\nz")
-		expected = strings.ReplaceAll(expected, "5", "\n5")
-		buf := make([]byte, 0, len(expected)+1024)
+
+		buf := make([]byte, 4096)
 		for {
-			b := make([]byte, 4096)
-			_, err := r.Read(b)
+			line := make([]byte, 4096)
+			_, err := r.Read(line)
 			if err == io.EOF {
-				buf = append(buf, b...)
 				break
 			}
 			if err != nil {
 				break
 			}
-			buf = append(buf, b...)
+			buf = append(buf, line...)
 		}
 		f.Close()
-		if bytes.Equal([]byte(expected), buf) {
-			runeE := []rune(expected)
-			runeB := []rune(string(buf))
-			for k, v := range runeE {
-				v++
-				if v!= runeB[k] {
-					t.Errorf("[NewReader] Expected:%c Returned:%c\n", v, runeB[k])
-				}
+		expected := createExpected(strings.Split(string(buf), ""), m)
+		for k, s := range strings.Split(string(buf), "") {
+			if !bytes.Equal([]byte(expected[k]), []byte(s)) {
+				t.Errorf("[NewReader] Expected:%s Returned:%s\n", expected[k], s)
 			}
 		}
+		break
 	}
 }
 
-func TestNewWriter (t *testing.T) {
+func TestNewWriter(t *testing.T) {
 
 }
 
@@ -463,12 +384,12 @@ func TestConvAsLargeK(t *testing.T) {
 		w := new(word)
 		w.val = []byte(v[0])
 		w.len = len(v[0])
-		if w.len==3 {
+		if w.len == 3 {
 			w.charType = hankaku + alphabet
-		} else if w.len==6 {
-			if w.val[5]==0x9e {
+		} else if w.len == 6 {
+			if w.val[5] == 0x9e {
 				w.charType = hankaku + katakana + voiced
-			} else if w.val[5]==0x9f {
+			} else if w.val[5] == 0x9f {
 				w.charType = hankaku + katakana + devoiced
 			}
 		}
@@ -513,12 +434,12 @@ func TestConvAsLargeH(t *testing.T) {
 		w := new(word)
 		w.val = []byte(v[0])
 		w.len = len(v[0])
-		if w.len==3 {
+		if w.len == 3 {
 			w.charType = hankaku + alphabet
-		} else if w.len==6 {
-			if w.val[5]==0x9e {
+		} else if w.len == 6 {
+			if w.val[5] == 0x9e {
 				w.charType = hankaku + katakana + voiced
-			} else if w.val[5]==0x9f {
+			} else if w.val[5] == 0x9f {
 				w.charType = hankaku + katakana + devoiced
 			}
 		}
