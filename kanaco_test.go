@@ -9,6 +9,10 @@ import (
 	"testing"
 )
 
+const (
+	bufSize = 4096
+)
+
 type testCase struct {
 	arg *word
 	ret string
@@ -29,7 +33,7 @@ var ks [][3]string = [][3]string{
 	{"ﾊﾟ", "パ", "ぱ"}, {"ﾋﾟ", "ピ", "ぴ"}, {"ﾌﾟ", "プ", "ぷ"}, {"ﾍﾟ", "ペ", "ぺ"}, {"ﾎﾟ", "ポ", "ぽ"},
 	{"ﾏ", "マ", "ま"}, {"ﾐ", "ミ", "み"}, {"ﾑ", "ム", "む"}, {"ﾒ", "メ", "め"}, {"ﾓ", "モ", "も"},
 	{"ﾗ", "ラ", "ら"}, {"ﾘ", "リ", "り"}, {"ﾙ", "ル", "る"}, {"ﾚ", "レ", "れ"}, {"ﾛ", "ロ", "ろ"},
-	{"ﾜ", "ワ", "わ"}, {"ｦ", "ヲ", "を"}, {"ﾝ", "ン", "ん"}, {"ｰ", "ー", "ー"},
+	{"ﾜ", "ワ", "わ"}, {"ｦ", "ヲ", "を"}, {"ﾝ", "ン", "ん"},
 }
 
 var ss [][2]string = [][2]string{
@@ -41,13 +45,16 @@ var ns [][2]string = [][2]string{
 	{"5", "５"}, {"6", "６"}, {"7", "７"}, {"8", "８"}, {"9", "９"},
 }
 
-var as [][2]string = [][2]string{
+var al [][2]string = [][2]string{
 	{"a", "ａ"}, {"b", "ｂ"}, {"c", "ｃ"}, {"d", "ｄ"}, {"e", "ｅ"},
 	{"f", "ｆ"}, {"g", "ｇ"}, {"h", "ｈ"}, {"i", "ｉ"}, {"j", "ｊ"},
 	{"k", "ｋ"}, {"l", "ｌ"}, {"m", "ｍ"}, {"n", "ｎ"}, {"o", "ｏ"},
 	{"p", "ｐ"}, {"q", "ｑ"}, {"r", "ｒ"}, {"s", "ｓ"}, {"t", "ｔ"},
 	{"u", "ｕ"}, {"v", "ｖ"}, {"w", "ｗ"}, {"x", "ｘ"}, {"y", "ｙ"},
 	{"z", "ｚ"},
+}
+
+var au [][2]string = [][2]string{
 	{"A", "Ａ"}, {"B", "Ｂ"}, {"C", "Ｃ"}, {"D", "Ｄ"}, {"E", "Ｅ"},
 	{"F", "Ｆ"}, {"G", "Ｇ"}, {"H", "Ｈ"}, {"I", "Ｉ"}, {"J", "Ｊ"},
 	{"K", "Ｋ"}, {"L", "Ｌ"}, {"M", "Ｍ"}, {"N", "Ｎ"}, {"O", "Ｏ"},
@@ -176,19 +183,14 @@ func TestNewWriter(t *testing.T) {
  * Zenkaku Space -> Hankaku Space
  */
 func TestConvAsSmallS(t *testing.T) {
-	cases := []testCase{}
-	for _, v := range ss {
-		w := new(word)
-		w.val = []byte(v[1])
-		w.len = len(v[1])
-		w.charType = zenkaku + space
-		tc := testCase{arg: w, ret: v[0]}
-		cases = append(cases, tc)
-	}
-	for _, c := range cases {
-		r := convAsSmallS(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsSmallS] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	w := &word{[]byte(ss[0][1]), zenkaku + space, len(ss[0][1])}
+	e := ss[0][0]
+	c := testCase{w, e}
+	cases := []testCase{c}
+	for _, cs := range cases {
+		r := convAsSmallS(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -197,19 +199,14 @@ func TestConvAsSmallS(t *testing.T) {
  * Hankaku Space -> Zenkaku Space
  */
 func TestConvAsLargeS(t *testing.T) {
-	cases := []testCase{}
-	for _, v := range ss {
-		w := new(word)
-		w.val = []byte(v[0])
-		w.len = len(v[0])
-		w.charType = zenkaku + space
-		tc := testCase{arg: w, ret: v[1]}
-		cases = append(cases, tc)
-	}
-	for _, c := range cases {
-		r := convAsLargeS(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsLargeS] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	w := &word{[]byte(ss[0][0]), hankaku + space, len(ss[0][0])}
+	e := ss[0][1]
+	c := testCase{w, e}
+	cases := []testCase{c}
+	for _, cs := range cases {
+		r := convAsLargeS(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -219,18 +216,16 @@ func TestConvAsLargeS(t *testing.T) {
  */
 func TestConvAsSmallN(t *testing.T) {
 	cases := []testCase{}
-	for _, v := range ns {
-		w := new(word)
-		w.val = []byte(v[1])
-		w.len = len(v[1])
-		w.charType = zenkaku + numeric
-		tc := testCase{arg: w, ret: v[0]}
-		cases = append(cases, tc)
+	for _, n := range ns {
+		w := &word{[]byte(n[1]), zenkaku + numeric, len(n[1])}
+		e := n[0]
+		c := testCase{w, e}
+		cases = append(cases, c)
 	}
-	for _, c := range cases {
-		r := convAsSmallN(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsSmallN] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	for _, cs := range cases {
+		r := convAsSmallN(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -240,18 +235,16 @@ func TestConvAsSmallN(t *testing.T) {
  */
 func TestConvAsLargeN(t *testing.T) {
 	cases := []testCase{}
-	for _, v := range ns {
-		w := new(word)
-		w.val = []byte(v[0])
-		w.len = len(v[0])
-		w.charType = hankaku + numeric
-		tc := testCase{arg: w, ret: v[1]}
-		cases = append(cases, tc)
+	for _, n := range ns {
+		w := &word{[]byte(n[0]), hankaku + numeric, len(n[0])}
+		e := n[1]
+		c := testCase{w, e}
+		cases = append(cases, c)
 	}
-	for _, c := range cases {
-		r := convAsLargeN(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsLargeN] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	for _, cs := range cases {
+		r := convAsLargeN(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -261,18 +254,22 @@ func TestConvAsLargeN(t *testing.T) {
  */
 func TestConvAsSmallR(t *testing.T) {
 	cases := []testCase{}
-	for _, v := range as {
-		w := new(word)
-		w.val = []byte(v[1])
-		w.len = len(v[1])
-		w.charType = zenkaku + alphabet
-		tc := testCase{arg: w, ret: v[0]}
-		cases = append(cases, tc)
+	for _, n := range al {
+		w := &word{[]byte(n[1]), zenkaku + alphabet + lowercase, len(n[1])}
+		e := n[0]
+		c := testCase{w, e}
+		cases = append(cases, c)
 	}
-	for _, c := range cases {
-		r := convAsSmallR(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsSmallR] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	for _, n := range au {
+		w := &word{[]byte(n[1]), zenkaku + alphabet + uppercase, len(n[1])}
+		e := n[0]
+		c := testCase{w, e}
+		cases = append(cases, c)
+	}
+	for _, cs := range cases {
+		r := convAsSmallR(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -282,18 +279,22 @@ func TestConvAsSmallR(t *testing.T) {
  */
 func TestConvAsLargeR(t *testing.T) {
 	cases := []testCase{}
-	for _, v := range as {
-		w := new(word)
-		w.val = []byte(v[0])
-		w.len = len(v[0])
-		w.charType = hankaku + alphabet
-		tc := testCase{arg: w, ret: v[1]}
-		cases = append(cases, tc)
+	for _, n := range al {
+		w := &word{[]byte(n[0]), hankaku + alphabet + lowercase, len(n[0])}
+		e := n[1]
+		c := testCase{w, e}
+		cases = append(cases, c)
 	}
-	for _, c := range cases {
-		r := convAsLargeR(c.arg)
-		if !bytes.Equal(r, []byte(c.ret)) {
-			t.Errorf("[convAsLargeR] Fail to convert. %s != %s\n", c.arg.val, string(r))
+	for _, n := range au {
+		w := &word{[]byte(n[0]), hankaku + alphabet + uppercase, len(n[0])}
+		e := n[1]
+		c := testCase{w, e}
+		cases = append(cases, c)
+	}
+	for _, cs := range cases {
+		r := convAsLargeR(cs.arg)
+		if !bytes.Equal(r, []byte(cs.ret)) {
+			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.ret)
 		}
 	}
 }
@@ -304,9 +305,10 @@ func TestConvAsLargeR(t *testing.T) {
  */
 func TestConvAsSmallA(t *testing.T) {
 	cases := []testCase{}
-	as = append(as, ns...)
-	as = append(as, ms...)
-	for _, v := range as {
+	args := [][2]string{}
+	args = append(args, ns...)
+	args = append(args, ms...)
+	for _, v := range au {
 		w := new(word)
 		w.val = []byte(v[1])
 		w.len = len(v[1])
@@ -332,20 +334,13 @@ func TestConvAsSmallA(t *testing.T) {
  */
 func TestConvAsLargeA(t *testing.T) {
 	cases := []testCase{}
-	as = append(as, ns...)
-	as = append(as, ms...)
+	args := [][2]string{}
+	args = append(args, ns...)
+	args = append(args, ms...)
 	cases = append(cases, testCase{arg: &word{[]byte("\""), asIs, 1}, ret: "\""})
 	cases = append(cases, testCase{arg: &word{[]byte("'"), asIs, 1}, ret: "'"})
 	cases = append(cases, testCase{arg: &word{[]byte("\\"), asIs, 1}, ret: "\\"})
 	cases = append(cases, testCase{arg: &word{[]byte("~"), asIs, 1}, ret: "~"})
-	for _, v := range as {
-		w := new(word)
-		w.val = []byte(v[0])
-		w.len = len(v[0])
-		w.charType = hankaku + alphabet + numeric
-		tc := testCase{arg: w, ret: v[1]}
-		cases = append(cases, tc)
-	}
 	for _, c := range cases {
 		r := convAsLargeA(c.arg)
 		if !bytes.Equal(r, []byte(c.ret)) {
