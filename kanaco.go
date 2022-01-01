@@ -328,45 +328,19 @@ func Byte(b []byte, mode string) []byte {
 	i := uint64(0)
 	for i < byteCount {
 		w := extract(b[i:])
+		val := w.val
 		for _, o := range order {
-			flg := false
-			if o == 'r' && isZen(w) && isAlpha(w) {
-				flg = true
-			} else if o == 'R' && isHan(w) && isAlpha(w) {
-				flg = true
-			} else if o == 'n' && isZen(w) && isNum(w) {
-				flg = true
-			} else if o == 'N' && isHan(w) && isNum(w) {
-				flg = true
-			} else if o == 'a' && isZen(w) && isAlphaNum(w) {
-				flg = true
-			} else if o == 'A' && isHan(w) && isAlphaNum(w) {
-				flg = true
-			} else if o == 's' && isZen(w) && isSpace(w) {
-				flg = true
-			} else if o == 'S' && isHan(w) && isSpace(w) {
-				flg = true
-			} else if o == 'k' && isZen(w) && isKata(w) {
-				flg = true
-			} else if o == 'K' && isHan(w) && isKata(w) {
-				flg = true
-			} else if o == 'h' && isZen(w) && isHira(w) {
-				flg = true
-			} else if o == 'H' && isHan(w) && isKata(w) {
-				flg = true
-			} else if o == 'c' && isZen(w) && isKata(w) {
-				flg = true
-			} else if o == 'C' && isZen(w) && isHira(w) {
-				flg = true
+			if _, ok := filters[o]; ok {
+				val = filters[o](w)
+				if bytes.Equal(w.val, val) {
+					break
+				} else {
+					continue
+				}
 			}
-			if flg {
-				// println("test", string(w.val), string(filters[o](w)))
-				buf = append(buf, filters[o](w)...)
-			} else {
-				buf = append(buf, w.val...)
-			}
-			i += uint64(w.len)
 		}
+		buf = append(buf, val...)
+		i += uint64(w.len)
 	}
 	return buf
 }
@@ -486,7 +460,7 @@ func isAlpha(w *word) bool {
 }
 
 func isAlphaNum(w *word) bool {
-	if w.charType&alphanumeric == alphabet {
+	if w.charType&alphanumeric == alphanumeric {
 		return true
 	} else {
 		return false
@@ -524,6 +498,23 @@ func isKata(w *word) bool {
 		return false
 	}
 }
+
+func isUpper(w *word) bool {
+	if w.charType&uppercase == uppercase {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isLower(w *word) bool {
+	if w.charType&lowercase == lowercase {
+		return true
+	} else {
+		return false
+	}
+}
+
 func extract(b []byte) *word {
 	if is1Byte(b) {
 		if b[0] == 0x20 {
@@ -599,17 +590,17 @@ func extract(b []byte) *word {
 					return &word{b[0:3], zenkaku + space, 3}
 				}
 			case 0x81:
-				if b[2] >= 0x81 && b[2] <= 0xbf { // ぁ ～ み
+				if b[2] >= 0x81 && b[2] <= 0xbf { // ぁ-み
 					return &word{b[0:3], zenkaku + hiragana, 3}
 				}
 			case 0x82:
-				if b[2] >= 0x80 && b[2] <= 0x93 { // む ～ ん
+				if b[2] >= 0x80 && b[2] <= 0x93 { // む-ん
 					return &word{b[0:3], zenkaku + hiragana, 3}
-				} else if b[2] >= 0xa1 && b[2] <= 0xbf { // ァ ～ タ
+				} else if b[2] >= 0xa1 && b[2] <= 0xbf { // ァ-タ
 					return &word{b[0:3], zenkaku + katakana, 3}
 				}
 			case 0x83:
-				if b[2] >= 0x80 && b[2] <= 0xb3 { // チ ～ ン
+				if b[2] >= 0x80 && b[2] <= 0xb3 { // チ-ン
 					return &word{b[0:3], zenkaku + katakana, 3}
 				}
 			}
@@ -626,41 +617,55 @@ func extract(b []byte) *word {
  * Hankaku Space -> Zenkaku Space
  */
 func convAsLargeS(w *word) []byte {
-	return []byte{0xe3, 0x80, 0x80}
+	if isHan(w) && isSpace(w) {
+		return []byte{0xe3, 0x80, 0x80}
+	}
+	return w.val
 }
 
 /**
  * Zenkaku Space -> Hankaku Space
  */
 func convAsSmallS(w *word) []byte {
-	return []byte{0x20}
+	if isZen(w) && isSpace(w) {
+		return []byte{0x20}
+	}
+	return w.val
 }
 
 /**
  * Hankaku Numeric -> Zenkaku Numeric
  */
 func convAsLargeN(w *word) []byte {
-	return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+	if isHan(w) && isNum(w) {
+		return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+	}
+	return w.val
 }
 
 /**
  * Zenkaku Numeric -> Hankaku Numeric
  */
 func convAsSmallN(w *word) []byte {
-	return []byte{w.val[2] - 0x60}
+	if isZen(w) && isNum(w) {
+		return []byte{w.val[2] - 0x60}
+	}
+	return w.val
 }
 
 /**
  * Hankaku Alphabet -> Zenkaku Alphabet
  */
 func convAsLargeR(w *word) []byte {
-	// A-Z -> Ａ-Ｚ
-	if w.charType&uppercase == uppercase {
-		return []byte{0xef, 0xbc, 0x60 + w.val[0]}
-	}
-	// a-z -> ａ-ｚ
-	if w.charType&lowercase == lowercase {
-		return []byte{0xef, 0xbd, 0x20 + w.val[0]}
+	if isHan(w) && isAlpha(w) {
+		// A-Z -> Ａ-Ｚ
+		if isUpper(w) {
+			return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+		}
+		// a-z -> ａ-ｚ
+		if isLower(w) {
+			return []byte{0xef, 0xbd, 0x20 + w.val[0]}
+		}
 	}
 	return w.val
 }
@@ -669,13 +674,15 @@ func convAsLargeR(w *word) []byte {
  * Zenkaku Alphabet -> Hankaku Alphabet
  */
 func convAsSmallR(w *word) []byte {
-	// Ａ-Ｚ -> A-Z
-	if w.charType&uppercase == uppercase {
-		return []byte{w.val[2] - 0x60}
-	}
-	// ａ-ｚ -> a-z
-	if w.charType&lowercase == lowercase {
-		return []byte{w.val[2] - 0x20}
+	if isZen(w) && isAlpha(w) {
+		// Ａ-Ｚ -> A-Z
+		if isUpper(w) {
+			return []byte{w.val[2] - 0x60}
+		}
+		// ａ-ｚ -> a-z
+		if isLower(w) {
+			return []byte{w.val[2] - 0x20}
+		}
 	}
 	return w.val
 }
@@ -685,11 +692,14 @@ func convAsSmallR(w *word) []byte {
  * !-}(Excluding ",',\)
  */
 func convAsLargeA(w *word) []byte {
-	if w.val[0] >= 0x21 && w.val[0] <= 0x5f {
-		return []byte{0xef, 0xbc, 0x60 + w.val[0]}
-	} else if w.val[0] >= 0x60 && w.val[0] <= 0x7d {
-		return []byte{0xef, 0xbd, 0x20 + w.val[0]}
+	if isHan(w) && isAlphaNum(w) {
+		if w.val[0] >= 0x21 && w.val[0] <= 0x5f {
+			return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+		} else if w.val[0] >= 0x60 && w.val[0] <= 0x7d {
+			return []byte{0xef, 0xbd, 0x20 + w.val[0]}
+		}
 	}
+	// fmt.Println(string(w.val), w.charType)
 	return w.val
 }
 
@@ -698,10 +708,12 @@ func convAsLargeA(w *word) []byte {
  * !-}(Excluding ",',\)
  */
 func convAsSmallA(w *word) []byte {
-	if w.val[2] >= 0x81 && w.val[2] <= 0xbf {
-		return []byte{w.val[2] - 0x60}
-	} else if w.val[2] >= 0x80 && w.val[2] <= 0x9d {
-		return []byte{w.val[2] - 0x20}
+	if isZen(w) && isAlphaNum(w) {
+		if w.val[1] == 0xbc && w.val[2] >= 0x81 && w.val[2] <= 0xbf {
+			return []byte{w.val[2] - 0x60}
+		} else if w.val[1] == 0xbd && w.val[2] >= 0x80 && w.val[2] <= 0x9d {
+			return []byte{w.val[2] - 0x20}
+		}
 	}
 	return w.val
 }
@@ -710,63 +722,69 @@ func convAsSmallA(w *word) []byte {
  * Zenkaku Katakana -> Hankaku Katakana
  */
 func convAsSmallK(w *word) []byte {
-	s := string(w.val)
-	if _, ok := tbl[s]; ok {
-		return tbl[s][1]
-	} else {
-		return w.val
+	if isZen(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
+		}
 	}
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Katakana
  */
 func convAsLargeK(w *word) []byte {
-	s := string(w.val)
-	if _, ok := tbl[s]; ok {
-		return tbl[s][1]
-	} else {
-		return w.val
+	if isHan(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
+		}
 	}
+	return w.val
 }
 
 /**
  * Zenkaku Hiragana -> Hankaku Katakana
  */
 func convAsSmallH(w *word) []byte {
-	s := string(w.val)
-	if _, ok := tbl[s]; ok {
-		return tbl[s][1]
-	} else {
-		return w.val
+	if isZen(w) && isHira(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
+		}
 	}
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Hiragana
  */
 func convAsLargeH(w *word) []byte {
-	s := string(w.val)
-	if _, ok := tbl[s]; ok {
-		return tbl[s][0]
-	} else {
-		return w.val
+	if isHan(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][0]
+		}
 	}
+	return w.val
 }
 
 /**
  * Zenkaku Katakana -> Zenkaku Hiragana
  */
 func convAsSmallC(w *word) []byte {
-	if w.val[1] == 0x82 { // ァ-タ
-		if w.val[2] >= 0xa1 && w.val[2] <= 0xbf {
-			return []byte{0xe3, 0x81, w.val[2] - 0x20}
-		}
-	} else if w.val[1] == 0x83 { // ダ-ン
-		if w.val[2] >= 0x80 && w.val[2] <= 0x9f { // ダ-ミ
-			return []byte{0xe3, 0x81, w.val[2] + 0x20}
-		} else if w.val[2] >= 0xa0 && w.val[2] <= 0xb3 { // ム-ン
-			return []byte{0xe3, 0x82, w.val[2] - 0x20}
+	if isZen(w) && isKata(w) {
+		if w.val[1] == 0x82 { // ァ-タ
+			if w.val[2] >= 0xa1 && w.val[2] <= 0xbf {
+				return []byte{0xe3, 0x81, w.val[2] - 0x20}
+			}
+		} else if w.val[1] == 0x83 { // ダ-ン
+			if w.val[2] >= 0x80 && w.val[2] <= 0x9f { // ダ-ミ
+				return []byte{0xe3, 0x81, w.val[2] + 0x20}
+			} else if w.val[2] >= 0xa0 && w.val[2] <= 0xb3 { // ム-ン
+				return []byte{0xe3, 0x82, w.val[2] - 0x20}
+			}
 		}
 	}
 	return w.val
@@ -776,15 +794,17 @@ func convAsSmallC(w *word) []byte {
  * Zenkaku Hiragana -> Zenkaku Katakana
  */
 func convAsLargeC(w *word) []byte {
-	if w.val[1] == 0x81 { // ぁ-み
-		if w.val[2] >= 0x81 && w.val[2] <= 0x9f { // ぁ-た
-			return []byte{0xe3, 0x82, w.val[2] + 0x20}
-		} else if w.val[2] >= 0xa0 && w.val[2] <= 0xbf { // だ-み
-			return []byte{0xe3, 0x83, w.val[2] - 0x20}
-		}
-	} else if w.val[1] == 0x82 { // む-ん
-		if w.val[2] >= 0x80 && w.val[2] <= 0x93 {
-			return []byte{0xe3, 0x83, w.val[2] + 0x20}
+	if isZen(w) && isHira(w) {
+		if w.val[1] == 0x81 { // ぁ-み
+			if w.val[2] >= 0x81 && w.val[2] <= 0x9f { // ぁ-た
+				return []byte{0xe3, 0x82, w.val[2] + 0x20}
+			} else if w.val[2] >= 0xa0 && w.val[2] <= 0xbf { // だ-み
+				return []byte{0xe3, 0x83, w.val[2] - 0x20}
+			}
+		} else if w.val[1] == 0x82 { // む-ん
+			if w.val[2] >= 0x80 && w.val[2] <= 0x93 {
+				return []byte{0xe3, 0x83, w.val[2] + 0x20}
+			}
 		}
 	}
 	return w.val
