@@ -2,7 +2,24 @@ package kanaco
 
 import (
 	"bufio"
+	"bytes"
 	"io"
+)
+
+const (
+	hankaku      = 1
+	zenkaku      = 2
+	space        = 4
+	numeric      = 8
+	alphabet     = 16
+	alphanumeric = 32
+	hiragana     = 64
+	katakana     = 128
+	voiced       = 256
+	devoiced     = 512
+	uppercase    = 1024
+	lowercase    = 2048
+	asIs         = 8192
 )
 
 type Reader struct {
@@ -10,178 +27,320 @@ type Reader struct {
 	mode string
 }
 
-var tbl map[string][]byte = map[string][]byte{
-	"ぁ": []byte{227, 129, 129}, "あ": []byte{227, 129, 130},
-	"ぃ": []byte{227, 129, 131}, "い": []byte{227, 129, 132},
-	"ぅ": []byte{227, 129, 133}, "う": []byte{227, 129, 134},
-	"ぇ": []byte{227, 129, 135}, "え": []byte{227, 129, 136},
-	"ぉ": []byte{227, 129, 137}, "お": []byte{227, 129, 138},
-	"か": []byte{227, 129, 139}, "が": []byte{227, 129, 140},
-	"き": []byte{227, 129, 141}, "ぎ": []byte{227, 129, 142},
-	"く": []byte{227, 129, 143}, "ぐ": []byte{227, 129, 144},
-	"け": []byte{227, 129, 145}, "げ": []byte{227, 129, 146},
-	"こ": []byte{227, 129, 147}, "ご": []byte{227, 129, 148},
-	"さ": []byte{227, 129, 149}, "ざ": []byte{227, 129, 150},
-	"し": []byte{227, 129, 151}, "じ": []byte{227, 129, 152},
-	"す": []byte{227, 129, 153}, "ず": []byte{227, 129, 154},
-	"せ": []byte{227, 129, 155}, "ぜ": []byte{227, 129, 156},
-	"そ": []byte{227, 129, 157}, "ぞ": []byte{227, 129, 158},
-	"た": []byte{227, 129, 159}, "だ": []byte{227, 129, 160},
-	"ち": []byte{227, 129, 161}, "ぢ": []byte{227, 129, 162},
-	"っ": []byte{227, 129, 163}, "つ": []byte{227, 129, 164}, "づ": []byte{227, 129, 165},
-	"て": []byte{227, 129, 166}, "で": []byte{227, 129, 167},
-	"と": []byte{227, 129, 168}, "ど": []byte{227, 129, 169},
-	"な": []byte{227, 129, 170},
-	"に": []byte{227, 129, 171},
-	"ぬ": []byte{227, 129, 172},
-	"ね": []byte{227, 129, 173},
-	"の": []byte{227, 129, 174},
-	"は": []byte{227, 129, 175}, "ば": []byte{227, 129, 176}, "ぱ": []byte{227, 129, 177},
-	"ひ": []byte{227, 129, 178}, "び": []byte{227, 129, 179}, "ぴ": []byte{227, 129, 180},
-	"ふ": []byte{227, 129, 181}, "ぶ": []byte{227, 129, 182}, "ぷ": []byte{227, 129, 183},
-	"へ": []byte{227, 129, 184}, "べ": []byte{227, 129, 185}, "ぺ": []byte{227, 129, 186},
-	"ほ": []byte{227, 129, 187}, "ぼ": []byte{227, 129, 188}, "ぽ": []byte{227, 129, 189},
-	"ま": []byte{227, 129, 190},
-	"み": []byte{227, 129, 191},
-	"む": []byte{227, 130, 128},
-	"め": []byte{227, 130, 129},
-	"も": []byte{227, 130, 130},
-	"ゃ": []byte{227, 130, 131}, "や": []byte{227, 130, 132},
-	"ゅ": []byte{227, 130, 133}, "ゆ": []byte{227, 130, 134},
-	"ょ": []byte{227, 130, 135}, "よ": []byte{227, 130, 136},
-	"ら": []byte{227, 130, 137},
-	"り": []byte{227, 130, 138},
-	"る": []byte{227, 130, 139},
-	"れ": []byte{227, 130, 140},
-	"ろ": []byte{227, 130, 141},
-	"ゎ": []byte{227, 130, 142},
-	"わ": []byte{227, 130, 143},
-	"ゐ": []byte{227, 130, 144},
-	"ゑ": []byte{227, 130, 145},
-	"を": []byte{227, 130, 146},
-	"ん": []byte{227, 130, 147},
-	"ァ": []byte{227, 130, 161}, "ア": []byte{227, 130, 162},
-	"ィ": []byte{227, 130, 163}, "イ": []byte{227, 130, 164},
-	"ゥ": []byte{227, 130, 165}, "ウ": []byte{227, 130, 166},
-	"ェ": []byte{227, 130, 167}, "エ": []byte{227, 130, 168},
-	"ォ": []byte{227, 130, 169}, "オ": []byte{227, 130, 170},
-	"カ": []byte{227, 130, 171}, "ガ": []byte{227, 130, 172},
-	"キ": []byte{227, 130, 173}, "ギ": []byte{227, 130, 174},
-	"ク": []byte{227, 130, 175}, "グ": []byte{227, 130, 176},
-	"ケ": []byte{227, 130, 177}, "ゲ": []byte{227, 130, 178},
-	"コ": []byte{227, 130, 179}, "ゴ": []byte{227, 130, 180},
-	"サ": []byte{227, 130, 181}, "ザ": []byte{227, 130, 182},
-	"シ": []byte{227, 130, 183}, "ジ": []byte{227, 130, 184},
-	"ス": []byte{227, 130, 185}, "ズ": []byte{227, 130, 186},
-	"セ": []byte{227, 130, 187}, "ゼ": []byte{227, 130, 188},
-	"ソ": []byte{227, 130, 189}, "ゾ": []byte{227, 130, 190},
-	"タ": []byte{227, 130, 191}, "ダ": []byte{227, 131, 128},
-	"チ": []byte{227, 131, 129}, "ヂ": []byte{227, 131, 130},
-	"ッ": []byte{227, 131, 131}, "ツ": []byte{227, 131, 132}, "ヅ": []byte{227, 131, 133},
-	"テ": []byte{227, 131, 134}, "デ": []byte{227, 131, 135},
-	"ト": []byte{227, 131, 136}, "ド": []byte{227, 131, 137},
-	"ナ": []byte{227, 131, 138},
-	"ニ": []byte{227, 131, 139},
-	"ヌ": []byte{227, 131, 140},
-	"ネ": []byte{227, 131, 141},
-	"ノ": []byte{227, 131, 142},
-	"ハ": []byte{227, 131, 143}, "バ": []byte{227, 131, 144}, "パ": []byte{227, 131, 145},
-	"ヒ": []byte{227, 131, 146}, "ビ": []byte{227, 131, 147}, "ピ": []byte{227, 131, 148},
-	"フ": []byte{227, 131, 149}, "ブ": []byte{227, 131, 150}, "プ": []byte{227, 131, 151},
-	"ヘ": []byte{227, 131, 152}, "ベ": []byte{227, 131, 153}, "ペ": []byte{227, 131, 154},
-	"ホ": []byte{227, 131, 155}, "ボ": []byte{227, 131, 156}, "ポ": []byte{227, 131, 157},
-	"マ": []byte{227, 131, 158},
-	"ミ": []byte{227, 131, 159},
-	"ム": []byte{227, 131, 160},
-	"メ": []byte{227, 131, 161},
-	"モ": []byte{227, 131, 162},
-	"ャ": []byte{227, 131, 163}, "ヤ": []byte{227, 131, 164},
-	"ュ": []byte{227, 131, 165}, "ユ": []byte{227, 131, 166},
-	"ョ": []byte{227, 131, 167}, "ヨ": []byte{227, 131, 168},
-	"ラ": []byte{227, 131, 169},
-	"リ": []byte{227, 131, 170},
-	"ル": []byte{227, 131, 171},
-	"レ": []byte{227, 131, 172},
-	"ロ": []byte{227, 131, 173},
-	"ヮ": []byte{227, 131, 174}, "ワ": []byte{227, 131, 175},
-	"ヰ": []byte{227, 131, 176},
-	"ヱ": []byte{227, 131, 177},
-	"ヲ": []byte{227, 131, 178},
-	"ン": []byte{227, 131, 179},
-	"ー": []byte{227, 131, 188},
-	"ｦ": []byte{239, 189, 166},
-	"ｧ": []byte{239, 189, 167}, "ｨ": []byte{239, 189, 168}, "ｩ": []byte{239, 189, 169}, "ｪ": []byte{239, 189, 170}, "ｫ": []byte{239, 189, 171},
-	"ｬ": []byte{239, 189, 172}, "ｭ": []byte{239, 189, 173}, "ｮ": []byte{239, 189, 174},
-	"ｯ": []byte{239, 189, 175}, "ｰ": []byte{239, 189, 176},
-	"ｱ": []byte{239, 189, 177}, "ｲ": []byte{239, 189, 178}, "ｳ": []byte{239, 189, 179}, "ｴ": []byte{239, 189, 180}, "ｵ": []byte{239, 189, 181},
-	"ｶ": []byte{239, 189, 182}, "ｷ": []byte{239, 189, 183}, "ｸ": []byte{239, 189, 184}, "ｹ": []byte{239, 189, 185}, "ｺ": []byte{239, 189, 186},
-	"ｶﾞ": []byte{239, 189, 182, 239, 190, 158}, "ｷﾞ": []byte{239, 189, 183, 239, 190, 158}, "ｸﾞ": []byte{239, 189, 184, 239, 190, 158},
-	"ｹﾞ": []byte{239, 189, 185, 239, 190, 158}, "ｺﾞ": []byte{239, 189, 186, 239, 190, 158},
-	"ｻ": []byte{239, 189, 187}, "ｼ": []byte{239, 189, 188}, "ｽ": []byte{239, 189, 189}, "ｾ": []byte{239, 189, 190}, "ｿ": []byte{239, 189, 191},
-	"ｻﾞ": []byte{239, 189, 187, 239, 190, 158}, "ｼﾞ": []byte{239, 189, 188, 239, 190, 158}, "ｽﾞ": []byte{239, 189, 189, 239, 190, 158},
-	"ｾﾞ": []byte{239, 189, 190, 239, 190, 158}, "ｿﾞ": []byte{239, 189, 191, 239, 190, 158},
-	"ﾀ": []byte{239, 190, 128}, "ﾁ": []byte{239, 190, 129}, "ﾂ": []byte{239, 190, 130}, "ﾃ": []byte{239, 190, 131}, "ﾄ": []byte{239, 190, 132},
-	"ﾀﾞ": []byte{239, 190, 128, 239, 190, 158}, "ﾁﾞ": []byte{239, 190, 129, 239, 190, 158}, "ﾂﾞ": []byte{239, 190, 130, 239, 190, 158},
-	"ﾃﾞ": []byte{239, 190, 131, 239, 190, 158}, "ﾄﾞ": []byte{239, 190, 132, 239, 190, 158},
-	"ﾅ": []byte{239, 190, 133}, "ﾆ": []byte{239, 190, 134}, "ﾇ": []byte{239, 190, 135}, "ﾈ": []byte{239, 190, 136}, "ﾉ": []byte{239, 190, 137},
-	"ﾊ": []byte{239, 190, 138}, "ﾋ": []byte{239, 190, 139}, "ﾌ": []byte{239, 190, 140}, "ﾍ": []byte{239, 190, 141}, "ﾎ": []byte{239, 190, 142},
-	"ﾊﾞ": []byte{239, 190, 138, 239, 190, 158}, "ﾋﾞ": []byte{239, 190, 139, 239, 190, 158}, "ﾌﾞ": []byte{239, 190, 140, 239, 190, 158},
-	"ﾍﾞ": []byte{239, 190, 141, 239, 190, 158}, "ﾎﾞ": []byte{239, 190, 142, 239, 190, 158},
-	"ﾊﾟ": []byte{239, 190, 138, 239, 190, 159}, "ﾋﾟ": []byte{239, 190, 139, 239, 190, 159}, "ﾌﾟ": []byte{239, 190, 140, 239, 190, 159},
-	"ﾍﾟ": []byte{239, 190, 141, 239, 190, 159}, "ﾎﾟ": []byte{239, 190, 142, 239, 190, 159},
-	"ﾏ": []byte{239, 190, 143}, "ﾐ": []byte{239, 190, 144}, "ﾑ": []byte{239, 190, 145}, "ﾒ": []byte{239, 190, 146}, "ﾓ": []byte{239, 190, 147},
-	"ﾔ": []byte{239, 190, 148}, "ﾕ": []byte{239, 190, 149}, "ﾖ": []byte{239, 190, 150},
-	"ﾗ": []byte{239, 190, 151}, "ﾘ": []byte{239, 190, 152}, "ﾙ": []byte{239, 190, 153}, "ﾚ": []byte{239, 190, 154}, "ﾛ": []byte{239, 190, 155},
-	"ﾜ": []byte{239, 190, 156}, "ﾝ": []byte{239, 190, 157},
-	"ﾞ": []byte{239, 190, 158}, "ﾟ": []byte{239, 190, 159},
+type Writer struct {
+	w    *bufio.Writer
+	mode string
+}
+
+type word struct {
+	val      []byte
+	charType int
+	len      int
+}
+
+/**
+  map[string][0][]byte -> Byte order of myself
+  map[string][1][]byte -> Byte order of myself
+  map[string][2][]byte -> Byte order of myself
+*/
+var tbl map[string][2][]byte = map[string][2][]byte{
+	"ぁ":  {[]byte("ァ"), []byte("ｧ")},
+	"あ":  {[]byte("ア"), []byte("ｱ")},
+	"ぃ":  {[]byte("ィ"), []byte("ｨ")},
+	"い":  {[]byte("イ"), []byte("ｲ")},
+	"ぅ":  {[]byte("ゥ"), []byte("ｩ")},
+	"う":  {[]byte("ウ"), []byte("ｳ")},
+	"ぇ":  {[]byte("ェ"), []byte("ｪ")},
+	"え":  {[]byte("エ"), []byte("ｴ")},
+	"ぉ":  {[]byte("ォ"), []byte("ｫ")},
+	"お":  {[]byte("オ"), []byte("ｵ")},
+	"か":  {[]byte("カ"), []byte("ｶ")},
+	"が":  {[]byte("ガ"), []byte("ｶﾞ")},
+	"き":  {[]byte("キ"), []byte("ｷ")},
+	"ぎ":  {[]byte("ギ"), []byte("ｷﾞ")},
+	"く":  {[]byte("ク"), []byte("ｸ")},
+	"ぐ":  {[]byte("グ"), []byte("ｸﾞ")},
+	"け":  {[]byte("ケ"), []byte("ｹ")},
+	"げ":  {[]byte("ゲ"), []byte("ｹﾞ")},
+	"こ":  {[]byte("コ"), []byte("ｺ")},
+	"ご":  {[]byte("ゴ"), []byte("ｺﾞ")},
+	"さ":  {[]byte("サ"), []byte("ｻ")},
+	"ざ":  {[]byte("ザ"), []byte("ｻﾞ")},
+	"し":  {[]byte("シ"), []byte("ｼ")},
+	"じ":  {[]byte("ジ"), []byte("ｼﾞ")},
+	"す":  {[]byte("ス"), []byte("ｽ")},
+	"ず":  {[]byte("ズ"), []byte("ｽﾞ")},
+	"せ":  {[]byte("セ"), []byte("ｾ")},
+	"ぜ":  {[]byte("ゼ"), []byte("ｾﾞ")},
+	"そ":  {[]byte("ソ"), []byte("ｿ")},
+	"ぞ":  {[]byte("ゾ"), []byte("ｿﾞ")},
+	"た":  {[]byte("タ"), []byte("ﾀ")},
+	"だ":  {[]byte("ダ"), []byte("ﾀﾞ")},
+	"ち":  {[]byte("チ"), []byte("ﾁ")},
+	"ぢ":  {[]byte("ヂ"), []byte("ﾁﾞ")},
+	"っ":  {[]byte("ッ"), []byte("ｯ")},
+	"つ":  {[]byte("ツ"), []byte("ﾂ")},
+	"づ":  {[]byte("ヅ"), []byte("ﾂﾞ")},
+	"て":  {[]byte("テ"), []byte("ﾃ")},
+	"で":  {[]byte("デ"), []byte("ﾃﾞ")},
+	"と":  {[]byte("ト"), []byte("ﾄ")},
+	"ど":  {[]byte("ド"), []byte("ﾄﾞ")},
+	"な":  {[]byte("ナ"), []byte("ﾅ")},
+	"に":  {[]byte("ニ"), []byte("ﾆ")},
+	"ぬ":  {[]byte("ヌ"), []byte("ﾇ")},
+	"ね":  {[]byte("ネ"), []byte("ﾈ")},
+	"の":  {[]byte("ノ"), []byte("ﾉ")},
+	"は":  {[]byte("ハ"), []byte("ﾊ")},
+	"ば":  {[]byte("バ"), []byte("ﾊﾞ")},
+	"ぱ":  {[]byte("パ"), []byte("ﾊﾟ")},
+	"ひ":  {[]byte("ヒ"), []byte("ﾋ")},
+	"び":  {[]byte("ビ"), []byte("ﾋﾞ")},
+	"ぴ":  {[]byte("ピ"), []byte("ﾋﾟ")},
+	"ふ":  {[]byte("フ"), []byte("ﾌ")},
+	"ぶ":  {[]byte("ブ"), []byte("ﾌﾞ")},
+	"ぷ":  {[]byte("プ"), []byte("ﾌﾟ")},
+	"へ":  {[]byte("ヘ"), []byte("ﾍ")},
+	"べ":  {[]byte("ベ"), []byte("ﾍﾞ")},
+	"ぺ":  {[]byte("ペ"), []byte("ﾍﾟ")},
+	"ほ":  {[]byte("ホ"), []byte("ﾎ")},
+	"ぼ":  {[]byte("ボ"), []byte("ﾎﾞ")},
+	"ぽ":  {[]byte("ポ"), []byte("ﾎﾟ")},
+	"ま":  {[]byte("マ"), []byte("ﾏ")},
+	"み":  {[]byte("ミ"), []byte("ﾐ")},
+	"む":  {[]byte("ム"), []byte("ﾑ")},
+	"め":  {[]byte("メ"), []byte("ﾒ")},
+	"も":  {[]byte("モ"), []byte("ﾓ")},
+	"ゃ":  {[]byte("ャ"), []byte("ｬ")},
+	"や":  {[]byte("ヤ"), []byte("ﾔ")},
+	"ゅ":  {[]byte("ュ"), []byte("ｭ")},
+	"ゆ":  {[]byte("ユ"), []byte("ﾕ")},
+	"ょ":  {[]byte("ョ"), []byte("ｮ")},
+	"よ":  {[]byte("ヨ"), []byte("ﾖ")},
+	"ら":  {[]byte("ラ"), []byte("ﾗ")},
+	"り":  {[]byte("リ"), []byte("ﾘ")},
+	"る":  {[]byte("ル"), []byte("ﾙ")},
+	"れ":  {[]byte("レ"), []byte("ﾚ")},
+	"ろ":  {[]byte("ロ"), []byte("ﾛ")},
+	"ゎ":  {[]byte("ヮ"), []byte("ゎ")},
+	"わ":  {[]byte("ワ"), []byte("ﾜ")},
+	"ゐ":  {[]byte("ヰ"), []byte("ゐ")},
+	"ゑ":  {[]byte("ヱ"), []byte("ゑ")},
+	"を":  {[]byte("ヲ"), []byte("ｦ")},
+	"ん":  {[]byte("ン"), []byte("ﾝ")},
+	"ァ":  {[]byte("ぁ"), []byte("ｧ")},
+	"ア":  {[]byte("あ"), []byte("ｱ")},
+	"ィ":  {[]byte("ぃ"), []byte("ｨ")},
+	"イ":  {[]byte("い"), []byte("ｲ")},
+	"ゥ":  {[]byte("ぅ"), []byte("ｩ")},
+	"ウ":  {[]byte("う"), []byte("ｳ")},
+	"ェ":  {[]byte("ぇ"), []byte("ｪ")},
+	"エ":  {[]byte("え"), []byte("ｴ")},
+	"ォ":  {[]byte("ぉ"), []byte("ｫ")},
+	"オ":  {[]byte("お"), []byte("ｵ")},
+	"カ":  {[]byte("か"), []byte("ｶ")},
+	"ガ":  {[]byte("が"), []byte("ｶﾞ")},
+	"キ":  {[]byte("き"), []byte("ｷ")},
+	"ギ":  {[]byte("ぎ"), []byte("ｷﾞ")},
+	"ク":  {[]byte("く"), []byte("ｸ")},
+	"グ":  {[]byte("ぐ"), []byte("ｸﾞ")},
+	"ケ":  {[]byte("け"), []byte("ｹ")},
+	"ゲ":  {[]byte("げ"), []byte("ｹﾞ")},
+	"コ":  {[]byte("こ"), []byte("ｺ")},
+	"ゴ":  {[]byte("ご"), []byte("ｺﾞ")},
+	"サ":  {[]byte("さ"), []byte("ｻ")},
+	"ザ":  {[]byte("ざ"), []byte("ｻﾞ")},
+	"シ":  {[]byte("し"), []byte("ｼ")},
+	"ジ":  {[]byte("じ"), []byte("ｼﾞ")},
+	"ス":  {[]byte("す"), []byte("ｽ")},
+	"ズ":  {[]byte("ず"), []byte("ｽﾞ")},
+	"セ":  {[]byte("せ"), []byte("ｾ")},
+	"ゼ":  {[]byte("ぜ"), []byte("ｾﾞ")},
+	"ソ":  {[]byte("そ"), []byte("ｿ")},
+	"ゾ":  {[]byte("ぞ"), []byte("ｿﾞ")},
+	"タ":  {[]byte("た"), []byte("ﾀ")},
+	"ダ":  {[]byte("だ"), []byte("ﾀﾞ")},
+	"チ":  {[]byte("ち"), []byte("ﾁ")},
+	"ヂ":  {[]byte("ぢ"), []byte("ﾁﾞ")},
+	"ッ":  {[]byte("っ"), []byte("ｯ")},
+	"ツ":  {[]byte("つ"), []byte("ﾂ")},
+	"ヅ":  {[]byte("づ"), []byte("ﾂﾞ")},
+	"テ":  {[]byte("て"), []byte("ﾃ")},
+	"デ":  {[]byte("で"), []byte("ﾃﾞ")},
+	"ト":  {[]byte("と"), []byte("ﾄ")},
+	"ド":  {[]byte("ど"), []byte("ﾄﾞ")},
+	"ナ":  {[]byte("な"), []byte("ﾅ")},
+	"ニ":  {[]byte("に"), []byte("ﾆ")},
+	"ヌ":  {[]byte("ぬ"), []byte("ﾇ")},
+	"ネ":  {[]byte("ね"), []byte("ﾈ")},
+	"ノ":  {[]byte("の"), []byte("ﾉ")},
+	"ハ":  {[]byte("は"), []byte("ﾊ")},
+	"バ":  {[]byte("ば"), []byte("ﾊﾞ")},
+	"パ":  {[]byte("ぱ"), []byte("ﾊﾟ")},
+	"ヒ":  {[]byte("ひ"), []byte("ﾋ")},
+	"ビ":  {[]byte("び"), []byte("ﾋﾞ")},
+	"ピ":  {[]byte("ぴ"), []byte("ﾋﾟ")},
+	"フ":  {[]byte("ふ"), []byte("ﾌ")},
+	"ブ":  {[]byte("ぶ"), []byte("ﾌﾞ")},
+	"プ":  {[]byte("ぷ"), []byte("ﾌﾟ")},
+	"ヘ":  {[]byte("へ"), []byte("ﾍ")},
+	"ベ":  {[]byte("べ"), []byte("ﾍﾞ")},
+	"ペ":  {[]byte("ぺ"), []byte("ﾍﾟ")},
+	"ホ":  {[]byte("ほ"), []byte("ﾎ")},
+	"ボ":  {[]byte("ぼ"), []byte("ﾎﾞ")},
+	"ポ":  {[]byte("ぽ"), []byte("ﾎﾟ")},
+	"マ":  {[]byte("ま"), []byte("ﾏ")},
+	"ミ":  {[]byte("み"), []byte("ﾐ")},
+	"ム":  {[]byte("む"), []byte("ﾑ")},
+	"メ":  {[]byte("め"), []byte("ﾒ")},
+	"モ":  {[]byte("も"), []byte("ﾓ")},
+	"ャ":  {[]byte("ゃ"), []byte("ｬ")},
+	"ヤ":  {[]byte("や"), []byte("ﾔ")},
+	"ュ":  {[]byte("ゅ"), []byte("ｭ")},
+	"ユ":  {[]byte("ゆ"), []byte("ﾕ")},
+	"ョ":  {[]byte("ょ"), []byte("ｮ")},
+	"ヨ":  {[]byte("よ"), []byte("ﾖ")},
+	"ラ":  {[]byte("ら"), []byte("ﾗ")},
+	"リ":  {[]byte("り"), []byte("ﾘ")},
+	"ル":  {[]byte("る"), []byte("ﾙ")},
+	"レ":  {[]byte("れ"), []byte("ﾚ")},
+	"ロ":  {[]byte("ろ"), []byte("ﾛ")},
+	"ヮ":  {[]byte("ゎ"), []byte("ヮ")},
+	"ワ":  {[]byte("わ"), []byte("ﾜ")},
+	"ヰ":  {[]byte("ゐ"), []byte("ヰ")},
+	"ヱ":  {[]byte("ゑ"), []byte("ヱ")},
+	"ヲ":  {[]byte("を"), []byte("ｦ")},
+	"ン":  {[]byte("ん"), []byte("ﾝ")},
+	"ｧ":  {[]byte("ぁ"), []byte("ァ")},
+	"ｱ":  {[]byte("あ"), []byte("ア")},
+	"ｨ":  {[]byte("ぃ"), []byte("ィ")},
+	"ｲ":  {[]byte("い"), []byte("イ")},
+	"ｩ":  {[]byte("ぅ"), []byte("ゥ")},
+	"ｳ":  {[]byte("う"), []byte("ウ")},
+	"ｪ":  {[]byte("ぇ"), []byte("ェ")},
+	"ｴ":  {[]byte("え"), []byte("エ")},
+	"ｫ":  {[]byte("ぉ"), []byte("ォ")},
+	"ｵ":  {[]byte("お"), []byte("オ")},
+	"ｶ":  {[]byte("か"), []byte("カ")},
+	"ｶﾞ": {[]byte("が"), []byte("ガ")},
+	"ｷ":  {[]byte("き"), []byte("キ")},
+	"ｷﾞ": {[]byte("ぎ"), []byte("ギ")},
+	"ｸ":  {[]byte("く"), []byte("ク")},
+	"ｸﾞ": {[]byte("ぐ"), []byte("グ")},
+	"ｹ":  {[]byte("け"), []byte("ケ")},
+	"ｹﾞ": {[]byte("げ"), []byte("ゲ")},
+	"ｺ":  {[]byte("こ"), []byte("コ")},
+	"ｺﾞ": {[]byte("ご"), []byte("ゴ")},
+	"ｻ":  {[]byte("さ"), []byte("サ")},
+	"ｻﾞ": {[]byte("ざ"), []byte("ザ")},
+	"ｼ":  {[]byte("し"), []byte("シ")},
+	"ｼﾞ": {[]byte("じ"), []byte("ジ")},
+	"ｽ":  {[]byte("す"), []byte("ス")},
+	"ｽﾞ": {[]byte("ず"), []byte("ズ")},
+	"ｾ":  {[]byte("せ"), []byte("セ")},
+	"ｾﾞ": {[]byte("ぜ"), []byte("ゼ")},
+	"ｿ":  {[]byte("そ"), []byte("ソ")},
+	"ｿﾞ": {[]byte("ぞ"), []byte("ゾ")},
+	"ﾀ":  {[]byte("た"), []byte("タ")},
+	"ﾀﾞ": {[]byte("だ"), []byte("ダ")},
+	"ﾁ":  {[]byte("ち"), []byte("チ")},
+	"ﾁﾞ": {[]byte("ぢ"), []byte("ヂ")},
+	"ｯ":  {[]byte("っ"), []byte("ッ")},
+	"ﾂ":  {[]byte("つ"), []byte("ツ")},
+	"ﾂﾞ": {[]byte("づ"), []byte("ヅ")},
+	"ﾃ":  {[]byte("て"), []byte("テ")},
+	"ﾃﾞ": {[]byte("で"), []byte("デ")},
+	"ﾄ":  {[]byte("と"), []byte("ト")},
+	"ﾄﾞ": {[]byte("ど"), []byte("ド")},
+	"ﾅ":  {[]byte("な"), []byte("ナ")},
+	"ﾆ":  {[]byte("に"), []byte("ニ")},
+	"ﾇ":  {[]byte("ぬ"), []byte("ヌ")},
+	"ﾈ":  {[]byte("ね"), []byte("ネ")},
+	"ﾉ":  {[]byte("の"), []byte("ノ")},
+	"ﾊ":  {[]byte("は"), []byte("ハ")},
+	"ﾊﾞ": {[]byte("ば"), []byte("バ")},
+	"ﾊﾟ": {[]byte("ぱ"), []byte("パ")},
+	"ﾋ":  {[]byte("ひ"), []byte("ヒ")},
+	"ﾋﾞ": {[]byte("び"), []byte("ビ")},
+	"ﾋﾟ": {[]byte("ぴ"), []byte("ピ")},
+	"ﾌ":  {[]byte("ふ"), []byte("フ")},
+	"ﾌﾞ": {[]byte("ぶ"), []byte("ブ")},
+	"ﾌﾟ": {[]byte("ぷ"), []byte("プ")},
+	"ﾍ":  {[]byte("へ"), []byte("ヘ")},
+	"ﾍﾞ": {[]byte("べ"), []byte("ベ")},
+	"ﾍﾟ": {[]byte("ぺ"), []byte("ペ")},
+	"ﾎ":  {[]byte("ほ"), []byte("ホ")},
+	"ﾎﾞ": {[]byte("ぼ"), []byte("ボ")},
+	"ﾎﾟ": {[]byte("ぽ"), []byte("ポ")},
+	"ﾏ":  {[]byte("ま"), []byte("マ")},
+	"ﾐ":  {[]byte("み"), []byte("ミ")},
+	"ﾑ":  {[]byte("む"), []byte("ム")},
+	"ﾒ":  {[]byte("め"), []byte("メ")},
+	"ﾓ":  {[]byte("も"), []byte("モ")},
+	"ｬ":  {[]byte("ゃ"), []byte("ャ")},
+	"ﾔ":  {[]byte("や"), []byte("ヤ")},
+	"ｭ":  {[]byte("ゅ"), []byte("ュ")},
+	"ﾕ":  {[]byte("ゆ"), []byte("ユ")},
+	"ｮ":  {[]byte("ょ"), []byte("ョ")},
+	"ﾖ":  {[]byte("よ"), []byte("ヨ")},
+	"ﾗ":  {[]byte("ら"), []byte("ラ")},
+	"ﾘ":  {[]byte("り"), []byte("リ")},
+	"ﾙ":  {[]byte("る"), []byte("ル")},
+	"ﾚ":  {[]byte("れ"), []byte("レ")},
+	"ﾛ":  {[]byte("ろ"), []byte("ロ")},
+	"ﾜ":  {[]byte("わ"), []byte("ワ")},
+	"ｦ":  {[]byte("を"), []byte("ヲ")},
+	"ﾝ":  {[]byte("ん"), []byte("ン")},
+}
+
+var filters map[byte]func(w *word) []byte = map[byte]func(w *word) []byte{
+	'r': convAsSmallR,
+	'R': convAsLargeR,
+	'n': convAsSmallN,
+	'N': convAsLargeN,
+	'a': convAsSmallA,
+	'A': convAsLargeA,
+	's': convAsSmallS,
+	'S': convAsLargeS,
+	'k': convAsSmallK,
+	'K': convAsLargeK,
+	'h': convAsSmallH,
+	'H': convAsLargeH,
+	'c': convAsSmallC,
+	'C': convAsLargeC,
 }
 
 func Byte(b []byte, mode string) []byte {
-	filters := map[byte]func([]byte) []byte{}
-	for _, m := range mode {
-		switch m {
-		case 'r':
-			filters['r'] = convAsSmallR
-		case 'R':
-			filters['R'] = convAsLargeR
-		case 'n':
-			filters['n'] = convAsSmallN
-		case 'N':
-			filters['N'] = convAsLargeN
-		case 'a':
-			filters['a'] = convAsSmallA
-		case 'A':
-			filters['A'] = convAsLargeA
-		case 's':
-			filters['s'] = convAsSmallS
-		case 'S':
-			filters['S'] = convAsLargeS
-		case 'k':
-			filters['k'] = convAsSmallK
-		case 'K':
-			filters['K'] = convAsLargeK
-		case 'h':
-			filters['h'] = convAsSmallH
-		case 'H':
-			filters['H'] = convAsLargeH
-		case 'c':
-			filters['c'] = convAsSmallC
-		case 'C':
-			filters['C'] = convAsLargeC
+	order := []byte{}
+	for _, m := range []byte(mode) {
+		flg := true
+		for _, v := range order {
+			if m == v {
+				flg = false
+				break
+			}
+		}
+		if flg {
+			order = append(order, m)
 		}
 	}
 	byteCount := uint64(len(b))
 	buf := make([]byte, 0, byteCount)
-	for i := uint64(0); i < byteCount; i++ {
-		c := make([]byte, 0, 6)
-		count := count(b[i:])
-		e := i + count
-		c = b[i:e]
-		for _, f := range filters {
-			c = f(c)
+	i := uint64(0)
+	for i < byteCount {
+		w := extract(b[i:])
+		val := w.val
+		for _, o := range order {
+			if _, ok := filters[o]; ok {
+				val = filters[o](w)
+				if bytes.Equal(w.val, val) {
+					break
+				} else {
+					continue
+				}
+			}
 		}
-		buf = append(buf, c...)
-		i += count - 1
+		buf = append(buf, val...)
+		i += uint64(w.len)
 	}
 	return buf
 }
@@ -198,979 +357,455 @@ func NewReader(r io.Reader, mode string) *Reader {
 }
 
 func (r *Reader) Read(p []byte) (int, error) {
-	b, err := r.r.ReadBytes('\n')
-	if err != nil {
-		return len(b), err
+	line, err := r.r.ReadBytes('\n')
+	buf := Byte(line, r.mode)
+	if len(p) < len(buf) {
+		p = append(p[0:], buf...)
+		return len(p), bufio.ErrBufferFull
 	}
-	line := Byte(b, r.mode)
-	n := copy(p, line)
-	if len(p) < len(line) {
-		p = append(p, line[n:]...)
-	}
-	return len(p), nil
+	copy(p, buf)
+	n := len(buf)
+	copy(p[n:], bytes.Repeat([]byte{0}, len(p)-len(buf)+1))
+	return len(p), err
 }
 
-func count(b []byte) uint64 {
-	if b[0] < 128 { // 1byte
-		return uint64(1)
-	} else if b[0] < 192 {
-		return uint64(0)
-	} else if b[0] < 224 { // 2byte
-		return uint64(2)
-	} else if b[0] < 240 { // 3byte
-		if len(b) >= 6 {
-			if b[0] == 239 && b[1] == 189 {
-				if b[2] >= 182 && b[2] <= 191 { // カ・サ行
-					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return uint64(6)
-					}
+//func NewWriter (w io.Writer, mode string) *Writer {
+//	writer := new(Writer)
+//	writer.w = bufio.NewWriter(w)
+//	writer.mode = mode
+//	return writer
+//}
+
+//func (w *Writer) Write (p []byte) (int, error) {
+//	return 0, nil
+//}
+
+//func (w *Writer) WriteString (s string) (int, error){
+//	return 0, nil
+//}
+
+//func (w *Writer) Flush () error {
+//
+//}
+func is1Byte(b []byte) bool {
+	if b[0] < 0x80 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func is2Bytes(b []byte) bool {
+	if b[0] > 0xc1 && b[0] < 0xe0 && len(b) > 1 && b[1] > 0x7f && b[1] < 0xc0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func is3Bytes(b []byte) bool {
+	if b[0] < 0xf0 && len(b) > 2 && b[1] > 0x7f && b[1] < 0xc0 && b[2] > 0x7f && b[2] < 0xc0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func is4Bytes(b []byte) bool {
+	if b[0] > 0xef && b[0] < 0xf5 && len(b) > 3 && b[1] > 0x7f && b[1] < 0xc0 && b[2] > 0x7f && b[2] < 0xc0 && b[3] > 0x7f && b[3] < 0xc0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isVoiced(w *word) bool {
+	if w.charType&voiced == voiced {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isDevoiced(w *word) bool {
+	if w.charType&devoiced == devoiced {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isSpace(w *word) bool {
+	if w.charType&space == space {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isNum(w *word) bool {
+	if w.charType&numeric == numeric {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isAlpha(w *word) bool {
+	if w.charType&alphabet == alphabet {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isAlphaNum(w *word) bool {
+	if w.charType&alphanumeric == alphanumeric {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isHan(w *word) bool {
+	if w.charType&hankaku == hankaku {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isZen(w *word) bool {
+	if w.charType&zenkaku == zenkaku {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isHira(w *word) bool {
+	if w.charType&hiragana == hiragana {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isKata(w *word) bool {
+	if w.charType&katakana == katakana {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isUpper(w *word) bool {
+	if w.charType&uppercase == uppercase {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isLower(w *word) bool {
+	if w.charType&lowercase == lowercase {
+		return true
+	} else {
+		return false
+	}
+}
+
+func extract(b []byte) *word {
+	if is1Byte(b) {
+		if b[0] == 0x20 {
+			return &word{b[0:1], hankaku + space, 1}
+		} else if b[0] >= 0x30 && b[0] <= 0x39 {
+			return &word{b[0:1], hankaku + numeric + alphanumeric, 1}
+		} else if b[0] >= 0x41 && b[0] <= 0x5a {
+			return &word{b[0:1], hankaku + alphabet + alphanumeric + uppercase, 1}
+		} else if b[0] >= 0x61 && b[0] <= 0x7a {
+			return &word{b[0:1], hankaku + alphabet + alphanumeric + lowercase, 1}
+		} else if b[0] >= 0x21 && b[0] <= 0x7d && b[0] != 0x22 && b[0] != 0x27 && b[0] != 0x5c {
+			return &word{b[0:1], hankaku + alphabet, 1}
+		} else if b[0] < 0x80 {
+			return &word{b[0:1], asIs, 1}
+		}
+	} else if is2Bytes(b) {
+		return &word{b[0:2], asIs, 2}
+	} else if is3Bytes(b) {
+		if b[0] == 0xef {
+			switch b[1] {
+			case 0xbc:
+				if b[2] >= 0x90 && b[2] <= 0x99 { // ０ ～ ９
+					return &word{b[0:3], zenkaku + numeric, 3}
+				} else if b[2] >= 0xa1 && b[2] <= 0xba { // Ａ ～ Ｚ
+					return &word{b[0:3], zenkaku + alphabet + alphanumeric + uppercase, 3}
+				} else if b[2] >= 0x81 && b[2] == 0xbf && b[2] != 0x82 && b[2] != 0x87 && b[2] != 0xbc {
+					return &word{b[0:3], zenkaku + alphanumeric, 3}
+				} else {
+					return &word{b[0:3], asIs, 3}
 				}
-			} else if b[0] == 239 && b[1] == 190 {
-				if b[2] >= 128 && b[2] <= 132 { // タ行
-					if b[3] == 239 && b[4] == 190 && b[5] == 158 {
-						return uint64(6)
+			case 0xbd:
+				if b[2] >= 0x81 && b[2] <= 0x9a {
+					return &word{b[0:3], zenkaku + alphabet + alphanumeric + lowercase, 3}
+				} else if b[2] >= 0x80 && b[2] <= 0x9d { // ｀ ～ ｝
+					return &word{b[0:3], zenkaku + alphanumeric, 3}
+				} else if b[2] >= 0xa6 && b[2] <= 0xbf {
+					if len(b) >= 6 {
+						if b[2] >= 0xb6 && b[2] <= 0xbf { // ｶ ～ ｿ
+							if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e { // 濁点
+								return &word{b[0:6], hankaku + katakana + voiced, 6}
+							}
+						}
 					}
-				} else if b[2] >= 138 && b[2] <= 142 { // ハ行
-					if b[3] == 239 && b[4] == 190 && (b[5] == 158 || b[5] == 159) {
-						return uint64(6)
+					return &word{b[0:3], hankaku + katakana, 3}
+				}
+			case 0xbe:
+				if b[2] >= 0x80 && b[2] <= 0x84 { // ﾀ ～ ﾄ
+					if len(b) >= 6 {
+						if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+							return &word{b[0:6], hankaku + katakana + voiced, 6}
+						}
 					}
+					return &word{b[0:3], hankaku + katakana, 3}
+				} else if b[2] >= 0x8a && b[2] <= 0x8d { // ﾊ ～ ﾎ
+					if len(b) >= 6 {
+						if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9e {
+							return &word{b[0:6], hankaku + katakana + voiced, 6}
+						} else if b[3] == 0xef && b[4] == 0xbe && b[5] == 0x9f {
+							return &word{b[0:6], hankaku + katakana + devoiced, 6}
+						}
+					}
+					return &word{b[0:3], hankaku + katakana, 3}
+				} else if b[2] >= 0x85 && b[2] <= 0x9d { // ﾅ ～ ﾝ
+					return &word{b[0:3], hankaku + katakana, 3}
 				}
 			}
+			return &word{b[0:3], asIs, 3}
+		} else if b[0] == 0xe3 {
+			// 全ひら・全カタ・全スペース
+			switch b[1] {
+			case 0x80:
+				if b[2] == 0x80 { // スペース
+					return &word{b[0:3], zenkaku + space, 3}
+				}
+			case 0x81:
+				if b[2] >= 0x81 && b[2] <= 0xbf { // ぁ-み
+					return &word{b[0:3], zenkaku + hiragana, 3}
+				}
+			case 0x82:
+				if b[2] >= 0x80 && b[2] <= 0x93 { // む-ん
+					return &word{b[0:3], zenkaku + hiragana, 3}
+				} else if b[2] >= 0xa1 && b[2] <= 0xbf { // ァ-タ
+					return &word{b[0:3], zenkaku + katakana, 3}
+				}
+			case 0x83:
+				if b[2] >= 0x80 && b[2] <= 0xb3 { // チ-ン
+					return &word{b[0:3], zenkaku + katakana, 3}
+				}
+			}
+			return &word{b[0:3], asIs, 3}
 		}
-		return uint64(3)
-	} else if b[0] < 248 { // 4byte
-		return uint64(4)
+		return &word{b[0:3], asIs, 3}
+	} else if is4Bytes(b) {
+		return &word{b[0:4], asIs, 4}
 	}
-	return uint64(0)
+	return &word{b[0:1], asIs, 1}
 }
 
 /**
  * Hankaku Space -> Zenkaku Space
  */
-func convAsLargeS(b []byte) []byte {
-	if len(b) == 1 && b[0] == 32 {
-		return []byte{227, 128, 128}
+func convAsLargeS(w *word) []byte {
+	if isHan(w) && isSpace(w) {
+		return []byte{0xe3, 0x80, 0x80}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Space -> Hankaku Space
  */
-func convAsSmallS(b []byte) []byte {
-	if len(b) == 3 && b[0] == 227 && b[1] == 128 && b[2] == 128 {
-		return []byte{32}
+func convAsSmallS(w *word) []byte {
+	if isZen(w) && isSpace(w) {
+		return []byte{0x20}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Numeric -> Zenkaku Numeric
  */
-func convAsLargeN(b []byte) []byte {
-	if len(b) == 1 && b[0] >= 48 && b[0] <= 57 {
-		return []byte{239, 188, 96 + b[0]}
+func convAsLargeN(w *word) []byte {
+	if isHan(w) && isNum(w) {
+		return []byte{0xef, 0xbc, 0x60 + w.val[0]}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Numeric -> Hankaku Numeric
  */
-func convAsSmallN(b []byte) []byte {
-	if len(b) == 3 && b[0] == 239 && b[1] == 188 && (b[2] >= 144 && b[2] <= 153) {
-		return []byte{b[2] - 96}
+func convAsSmallN(w *word) []byte {
+	if isZen(w) && isNum(w) {
+		return []byte{w.val[2] - 0x60}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Alphabet -> Zenkaku Alphabet
  */
-func convAsLargeR(b []byte) []byte {
-	if len(b) != 1 {
-		return b
+func convAsLargeR(w *word) []byte {
+	if isHan(w) && isAlpha(w) {
+		// A-Z -> Ａ-Ｚ
+		if isUpper(w) {
+			return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+		}
+		// a-z -> ａ-ｚ
+		if isLower(w) {
+			return []byte{0xef, 0xbd, 0x20 + w.val[0]}
+		}
 	}
-	// A-Z -> Ａ-Ｚ
-	if b[0] >= 65 && b[0] <= 90 {
-		return []byte{239, 188, 96 + b[0]}
-	}
-	// a-z -> ａ-ｚ
-	if b[0] >= 97 && b[0] <= 122 {
-		return []byte{239, 189, 32 + b[0]}
-	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Alphabet -> Hankaku Alphabet
  */
-func convAsSmallR(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallR(w *word) []byte {
+	if isZen(w) && isAlpha(w) {
+		// Ａ-Ｚ -> A-Z
+		if isUpper(w) {
+			return []byte{w.val[2] - 0x60}
+		}
+		// ａ-ｚ -> a-z
+		if isLower(w) {
+			return []byte{w.val[2] - 0x20}
+		}
 	}
-	// Ａ-Ｚ -> A-Z
-	if b[0] == 239 && b[1] == 188 && (b[2] >= 161 && b[2] <= 186) {
-		return []byte{b[2] - 96}
-	}
-	// ａ-ｚ -> a-z
-	if b[0] == 239 && b[1] == 189 && (b[2] >= 129 && b[2] <= 154) {
-		return []byte{b[2] - 32}
-	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku AlphaNumeric -> Zenkaku AlphaNumeric
  * !-}(Excluding ",',\)
  */
-func convAsLargeA(b []byte) []byte {
-	if len(b) != 1 {
-		return b
-	}
-	if b[0] > 32 && b[0] < 96 {
-		if b[0] == 34 || b[0] == 39 || b[0] == 92 {
-			return b
+func convAsLargeA(w *word) []byte {
+	if isHan(w) && isAlphaNum(w) {
+		if w.val[0] >= 0x21 && w.val[0] <= 0x5f {
+			return []byte{0xef, 0xbc, 0x60 + w.val[0]}
+		} else if w.val[0] >= 0x60 && w.val[0] <= 0x7d {
+			return []byte{0xef, 0xbd, 0x20 + w.val[0]}
 		}
-		return []byte{239, 188, 96 + b[0]}
-	} else if b[0] > 95 && b[0] < 126 {
-		return []byte{239, 189, 32 + b[0]}
 	}
-	return b
+	// fmt.Println(string(w.val), w.charType)
+	return w.val
 }
 
 /**
  * Zenkaku AlphaNumeric -> Hankaku AlphaNumeric
  * !-}(Excluding ",',\)
  */
-func convAsSmallA(b []byte) []byte {
-	if len(b) != 3 {
-		return b
+func convAsSmallA(w *word) []byte {
+	if isZen(w) && isAlphaNum(w) {
+		if w.val[1] == 0xbc && w.val[2] >= 0x81 && w.val[2] <= 0xbf {
+			return []byte{w.val[2] - 0x60}
+		} else if w.val[1] == 0xbd && w.val[2] >= 0x80 && w.val[2] <= 0x9d {
+			return []byte{w.val[2] - 0x20}
+		}
 	}
-	// ！-＿ -> !-_
-	if b[0] == 239 && b[1] == 188 && (b[2] >= 129 && b[2] <= 191) {
-		return []byte{b[2] - 96}
-	}
-	// ｀-｝ -> `-}
-	if b[0] == 239 && b[1] == 189 && (b[2] >= 128 && b[2] <= 157) {
-		return []byte{b[2] - 32}
-	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Katakana -> Hankaku Katakana
  */
-func convAsSmallK(b []byte) []byte {
-	if len(b) != 3 {
-		return b
-	}
-	if b[1] == 130 && b[0] == 227 {
-		switch b[2] {
-		case 161: // ァ
-			return tbl["ｧ"]
-		case 162: // ア
-			return tbl["ｱ"]
-		case 163: // ィ
-			return tbl["ｨ"]
-		case 164: // イ
-			return tbl["ｲ"]
-		case 165: // ゥ
-			return tbl["ｩ"]
-		case 166: // ウ
-			return tbl["ｳ"]
-		case 167: // ェ
-			return tbl["ｪ"]
-		case 168: // エ
-			return tbl["ｴ"]
-		case 169: // ォ
-			return tbl["ｫ"]
-		case 170: // オ
-			return tbl["ｵ"]
-		case 171: // カ
-			return tbl["ｶ"]
-		case 172: // ガ
-			return tbl["ｶﾞ"]
-		case 173:
-			return tbl["ｷ"] // キ
-		case 174:
-			return tbl["ｷﾞ"] // ギ
-		case 175:
-			return tbl["ｸ"] // ク
-		case 176:
-			return tbl["ｸﾞ"] // グ
-		case 177:
-			return tbl["ｹ"] // ケ
-		case 178:
-			return tbl["ｹﾞ"] // ゲ
-		case 179:
-			return tbl["ｺ"] // コ
-		case 180:
-			return tbl["ｺﾞ"] // ゴ
-		case 181:
-			return tbl["ｻ"] // サ
-		case 182:
-			return tbl["ｻﾞ"] // ザ
-		case 183:
-			return tbl["ｼ"] // シ
-		case 184:
-			return tbl["ｼﾞ"] // ジ
-		case 185:
-			return tbl["ｽ"] // ス
-		case 186:
-			return tbl["ｽﾞ"] // ズ
-		case 187:
-			return tbl["ｾ"] // セ
-		case 188:
-			return tbl["ｾﾞ"] // ゼ
-		case 189:
-			return tbl["ｿ"] // ソ
-		case 190:
-			return tbl["ｿﾞ"] // ゾ
-		case 191:
-			return tbl["ﾀ"] // タ
-		}
-	} else if b[1] == 131 && b[0] == 227 {
-		switch b[2] {
-		case 128:
-			return tbl["ﾀﾞ"] // ダ
-		case 129:
-			return tbl["ﾁ"] // チ
-		case 130:
-			return tbl["ﾁﾞ"] // ヂ
-		case 131:
-			return tbl["ｯ"] // ッ
-		case 132:
-			return tbl["ﾂ"] // ツ
-		case 133:
-			return tbl["ﾂﾞ"] // ヅ
-		case 134:
-			return tbl["ﾃ"] // テ
-		case 135:
-			return tbl["ﾃﾞ"] // デ
-		case 136:
-			return tbl["ﾄ"] // ト
-		case 137:
-			return tbl["ﾄﾞ"] // ド
-		case 138:
-			return tbl["ﾅ"] // ナ
-		case 139:
-			return tbl["ﾆ"] // ニ
-		case 140:
-			return tbl["ﾇ"] // ヌ
-		case 141:
-			return tbl["ﾈ"] // ネ
-		case 142:
-			return tbl["ﾉ"] // ノ
-		case 143:
-			return tbl["ﾊ"] // ハ
-		case 144:
-			return tbl["ﾊﾞ"] // バ
-		case 145:
-			return tbl["ﾊﾟ"] // パ
-		case 146:
-			return tbl["ﾋ"] // ヒ
-		case 147:
-			return tbl["ﾋﾞ"] // ビ
-		case 148:
-			return tbl["ﾋﾟ"] // ピ
-		case 149:
-			return tbl["ﾌ"] // フ
-		case 150:
-			return tbl["ﾌﾞ"] // ブ
-		case 151:
-			return tbl["ﾌﾟ"] // プ
-		case 152:
-			return tbl["ﾍ"] // ヘ
-		case 153:
-			return tbl["ﾍﾞ"] // ベ
-		case 154:
-			return tbl["ﾍﾟ"] // ペ
-		case 155:
-			return tbl["ﾎ"] // ホ
-		case 156:
-			return tbl["ﾎﾞ"] // ボ
-		case 157:
-			return tbl["ﾎﾟ"] // ポ
-		case 158:
-			return tbl["ﾏ"] // マ
-		case 159:
-			return tbl["ﾐ"] // ミ
-		case 160:
-			return tbl["ﾑ"] // ム
-		case 161:
-			return tbl["ﾒ"] // メ
-		case 162:
-			return tbl["ﾓ"] // モ
-		case 163:
-			return tbl["ｬ"] // ャ
-		case 164:
-			return tbl["ﾔ"] // ヤ
-		case 165:
-			return tbl["ｭ"] // ュ
-		case 166:
-			return tbl["ﾕ"] // ユ
-		case 167:
-			return tbl["ｮ"] // ョ
-		case 168:
-			return tbl["ﾖ"] // ヨ
-		case 169:
-			return tbl["ﾗ"] // ラ
-		case 170:
-			return tbl["ﾘ"] // リ
-		case 171:
-			return tbl["ﾙ"] // ル
-		case 172:
-			return tbl["ﾚ"] // レ
-		case 173:
-			return tbl["ﾛ"] // ロ
-		case 175:
-			return tbl["ﾜ"] // ワ
-		case 176:
-			return tbl["ｲ"] // ヰ
-		case 177:
-			return tbl["ｴ"] // ヱ
-		case 178:
-			return tbl["ｦ"] // ヲ
-		case 179:
-			return tbl["ﾝ"] // ン
-		case 188:
-			return tbl["ｰ"] // ー
+func convAsSmallK(w *word) []byte {
+	if isZen(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Katakana
  */
-func convAsLargeK(b []byte) []byte {
-	len := len(b)
-	if len != 3 && len != 6 {
-		return b
-	}
-	if b[1] == 189 && b[0] == 239 {
-		switch b[2] {
-		case 166: // ｦ
-			return tbl["ヲ"]
-		case 167: // ｧ
-			return tbl["ァ"]
-		case 168: // ｨ
-			return tbl["ィ"]
-		case 169: // ｩ
-			return tbl["ゥ"]
-		case 170: // ｪ
-			return tbl["ェ"]
-		case 171: // ｫ
-			return tbl["ォ"]
-		case 172: // ｬ
-			return tbl["ャ"]
-		case 173: // ｭ
-			return tbl["ュ"]
-		case 174: // ｮ
-			return tbl["ョ"]
-		case 175: // ｯ
-			return tbl["ッ"]
-		case 176: // ｰ
-			return tbl["ー"]
-		case 177: // ｱ
-			return tbl["ア"]
-		case 178: // ｲ
-			return tbl["イ"]
-		case 179: // ｳ
-			return tbl["ウ"]
-		case 180: // ｴ
-			return tbl["エ"]
-		case 181: // ｵ
-			return tbl["オ"]
-		case 182: // ｶ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ガ"]
-			}
-			return tbl["カ"]
-		case 183: // ｷ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ギ"]
-			}
-			return tbl["キ"]
-		case 184: // ｸ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["グ"]
-			}
-			return tbl["ク"]
-		case 185: // ｹ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ゲ"]
-			}
-			return tbl["ケ"]
-		case 186: // ｺ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ゴ"]
-			}
-			return tbl["コ"]
-		case 187: // ｻ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ザ"]
-			}
-			return tbl["サ"]
-		case 188: // ｼ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ジ"]
-			}
-			return tbl["シ"]
-		case 189: // ｽ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ズ"]
-			}
-			return tbl["ス"]
-		case 190: // ｾ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ゼ"]
-			}
-			return tbl["セ"]
-		case 191: // ｿ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ゾ"]
-			}
-			return tbl["ソ"]
-		}
-	} else if b[1] == 190 && b[0] == 239 {
-		switch b[2] {
-		case 128: // ﾀ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ダ"]
-			}
-			return tbl["タ"]
-		case 129: // ﾁ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ヂ"]
-			}
-			return tbl["チ"]
-		case 130: // ﾂ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ヅ"]
-			}
-			return tbl["ツ"]
-		case 131: // ﾃ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["デ"]
-			}
-			return tbl["テ"]
-		case 132: // ﾄ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ド"]
-			}
-			return tbl["ト"]
-		case 133: // ナ
-			return tbl["ナ"]
-		case 134: // ニ
-			return tbl["ニ"]
-		case 135: // ヌ
-			return tbl["ヌ"]
-		case 136: // ネ
-			return tbl["ネ"]
-		case 137: // ノ
-			return tbl["ノ"]
-		case 138: // ハ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["パ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["バ"]
-			}
-			return tbl["ハ"]
-		case 139: // ヒ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ピ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ビ"]
-			}
-			return tbl["ヒ"]
-		case 140: // フ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["プ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ブ"]
-			}
-			return tbl["フ"]
-		case 141: // ヘ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ペ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ベ"]
-			}
-			return tbl["ヘ"]
-		case 142: // ホ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ポ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ボ"]
-			} else {
-				return tbl["ホ"]
-			}
-		case 143: // マ
-			return tbl["マ"]
-		case 144: // ミ
-			return tbl["ミ"]
-		case 145: // ム
-			return tbl["ム"]
-		case 146: // メ
-			return tbl["メ"]
-		case 147: // モ
-			return tbl["モ"]
-		case 148: // ヤ
-			return tbl["ヤ"]
-		case 149: // ユ
-			return tbl["ユ"]
-		case 150: // ヨ
-			return tbl["ヨ"]
-		case 151: // ラ
-			return tbl["ラ"]
-		case 152: // リ
-			return tbl["リ"]
-		case 153: // ル
-			return tbl["ル"]
-		case 154: // レ
-			return tbl["レ"]
-		case 155: // ロ
-			return tbl["ロ"]
-		case 156: // ワ
-			return tbl["ワ"]
-		case 157: // ン
-			return tbl["ン"]
+func convAsLargeK(w *word) []byte {
+	if isHan(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Hiragana -> Hankaku Katakana
  */
-func convAsSmallH(b []byte) []byte {
-	len := len(b)
-	if len != 3 {
-		return b
-	}
-	if b[1] == 129 && b[0] == 227 {
-		switch b[2] {
-		case 129: // ぁ
-			return tbl["ｧ"]
-		case 130: // あ
-			return tbl["ｱ"]
-		case 131: // ぃ
-			return tbl["ｨ"]
-		case 132: // い
-			return tbl["ｲ"]
-		case 133: // ぅ
-			return tbl["ｩ"]
-		case 134: // う
-			return tbl["ｳ"]
-		case 135: // ぇ
-			return tbl["ｪ"]
-		case 136: // え
-			return tbl["ｴ"]
-		case 137: // ぉ
-			return tbl["ｫ"]
-		case 138: // お
-			return tbl["ｵ"]
-		case 139: // か
-			return tbl["ｶ"]
-		case 140: // が
-			return tbl["ｶﾞ"]
-		case 141: // き
-			return tbl["ｷ"]
-		case 142: // ぎ
-			return tbl["ｷﾞ"]
-		case 143: // く
-			return tbl["ｸ"]
-		case 144: // ぐ
-			return tbl["ｸﾞ"]
-		case 145: // け
-			return tbl["ｹ"]
-		case 146: // げ
-			return tbl["ｹﾞ"]
-		case 147: // こ
-			return tbl["ｺ"]
-		case 148: // ご
-			return tbl["ｺﾞ"]
-		case 149: // さ
-			return tbl["ｻ"]
-		case 150: // ざ
-			return tbl["ｻﾞ"]
-		case 151: // し
-			return tbl["ｼ"]
-		case 152: // じ
-			return tbl["ｼﾞ"]
-		case 153: // す
-			return tbl["ｽ"]
-		case 154: // ず
-			return tbl["ｽﾞ"]
-		case 155: // せ
-			return tbl["ｾ"]
-		case 156: // ぜ
-			return tbl["ｾﾞ"]
-		case 157: // そ
-			return tbl["ｿ"]
-		case 158: // ぞ
-			return tbl["ｿﾞ"]
-		case 159: // た
-			return tbl["ﾀ"]
-		case 160: // だ
-			return tbl["ﾀﾞ"]
-		case 161: // ち
-			return tbl["ﾁ"]
-		case 162: // ぢ
-			return tbl["ﾁﾞ"]
-		case 163: // っ
-			return tbl["ｯ"]
-		case 164: // つ
-			return tbl["ﾂ"]
-		case 165: // づ
-			return tbl["ﾂﾞ"]
-		case 166: // て
-			return tbl["ﾃ"]
-		case 167: // で
-			return tbl["ﾃﾞ"]
-		case 168: // と
-			return tbl["ﾄ"]
-		case 169: // ど
-			return tbl["ﾄﾞ"]
-		case 170: // な
-			return tbl["ﾅ"]
-		case 171: // に
-			return tbl["ﾆ"]
-		case 172: // ぬ
-			return tbl["ﾇ"]
-		case 173: // ね
-			return tbl["ﾈ"]
-		case 174: // の
-			return tbl["ﾉ"]
-		case 175: // は
-			return tbl["ﾊ"]
-		case 176: // ば
-			return tbl["ﾊﾞ"]
-		case 177: // ぱ
-			return tbl["ﾊﾟ"]
-		case 178: // ひ
-			return tbl["ﾋ"]
-		case 179: // び
-			return tbl["ﾋﾞ"]
-		case 180: // ぴ
-			return tbl["ﾋﾟ"]
-		case 181: // ふ
-			return tbl["ﾌ"]
-		case 182: // ぶ
-			return tbl["ﾌﾞ"]
-		case 183: // ぷ
-			return tbl["ﾌﾟ"]
-		case 184: // へ
-			return tbl["ﾍ"]
-		case 185: // べ
-			return tbl["ﾍﾞ"]
-		case 186: // ぺ
-			return tbl["ﾍﾟ"]
-		case 187: // ほ
-			return tbl["ﾎ"]
-		case 188: // ぼ
-			return tbl["ﾎﾞ"]
-		case 189: // ぽ
-			return tbl["ﾎﾟ"]
-		case 190: // ま
-			return tbl["ﾏ"]
-		case 191: // み
-			return tbl["ﾐ"]
+func convAsSmallH(w *word) []byte {
+	if isZen(w) && isHira(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][1]
 		}
-	} else if b[1] == 130 && b[0] == 227 {
-		switch b[2] {
-		case 128: // む
-			return tbl["ﾑ"]
-		case 129: // め
-			return tbl["ﾒ"]
-		case 130: // も
-			return tbl["ﾓ"]
-		case 131: // ゃ
-			return tbl["ｬ"]
-		case 132: // や
-			return tbl["ﾔ"]
-		case 133: // ゅ
-			return tbl["ｭ"]
-		case 134: // ゆ
-			return tbl["ﾕ"]
-		case 135: // ょ
-			return tbl["ｮ"]
-		case 136: // よ
-			return tbl["ﾖ"]
-		case 137: // ら
-			return tbl["ﾗ"]
-		case 138: // り
-			return tbl["ﾘ"]
-		case 139: // る
-			return tbl["ﾙ"]
-		case 140: // れ
-			return tbl["ﾚ"]
-		case 141: // ろ
-			return tbl["ﾛ"]
-		case 143: // わ
-			return tbl["ﾜ"]
-		case 144: // ゐ
-			return tbl["ｲ"]
-		case 145: // ゑ
-			return tbl["ｴ"]
-		case 146: // を
-			return tbl["ｦ"]
-		case 147: // ん
-			return tbl["ﾝ"]
-		}
-	} else if b[2] == 188 && b[1] == 131 && b[0] == 227 {
-		return tbl["ｰ"]
 	}
-	return b
+	return w.val
 }
 
 /**
  * Hankaku Katakana -> Zenkaku Hiragana
  */
-func convAsLargeH(b []byte) []byte {
-	len := len(b)
-	if len != 3 && len != 6 {
-		return b
-	}
-	if b[1] == 189 && b[0] == 239 {
-		switch b[2] {
-		case 166: // ｦ
-			return tbl["を"]
-		case 167: // ｧ
-			return tbl["ぁ"]
-		case 168: // ｨ
-			return tbl["ぃ"]
-		case 169: // ｩ
-			return tbl["ぅ"]
-		case 170: // ｪ
-			return tbl["ぇ"]
-		case 171: // ｫ
-			return tbl["ぉ"]
-		case 172: // ｬ
-			return tbl["ゃ"]
-		case 173: // ｭ
-			return tbl["ゅ"]
-		case 174: // ｮ
-			return tbl["ょ"]
-		case 175: // ｯ
-			return tbl["っ"]
-		case 176: // ｰ
-			return tbl["ー"]
-		case 177: // ｱ
-			return tbl["あ"]
-		case 178: // ｲ
-			return tbl["い"]
-		case 179: // ｳ
-			return tbl["う"]
-		case 180: // ｴ
-			return tbl["え"]
-		case 181: // ｵ
-			return tbl["お"]
-		case 182: // ｶ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["が"]
-			}
-			return tbl["か"]
-		case 183: // ｷ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぎ"]
-			}
-			return tbl["き"]
-		case 184: // ｸ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぐ"]
-			}
-			return tbl["く"]
-		case 185: // ｹ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["げ"]
-			}
-			return tbl["け"]
-		case 186: // ｺ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ご"]
-			}
-			return tbl["こ"]
-		case 187: // ｻ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ざ"]
-			}
-			return tbl["さ"]
-		case 188: // ｼ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["じ"]
-			}
-			return tbl["し"]
-		case 189: // ｽ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ず"]
-			}
-			return tbl["す"]
-		case 190: // ｾ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぜ"]
-			}
-			return tbl["せ"]
-		case 191: // ｿ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぞ"]
-			}
-			return tbl["そ"]
-		}
-	} else if b[1] == 190 && b[0] == 239 {
-		switch b[2] {
-		case 128: // ﾀ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["だ"]
-			}
-			return tbl["た"]
-		case 129: // ﾁ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぢ"]
-			}
-			return tbl["ち"]
-		case 130: // ﾂ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["づ"]
-			}
-			return tbl["つ"]
-		case 131: // ﾃ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["で"]
-			}
-			return tbl["て"]
-		case 132: // ﾄ
-			if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ど"]
-			}
-			return tbl["と"]
-		case 133: // ﾅ
-			return tbl["な"]
-		case 134: // ﾆ
-			return tbl["に"]
-		case 135: // ﾇ
-			return tbl["ぬ"]
-		case 136: // ﾈ
-			return tbl["ね"]
-		case 137: // ﾉ
-			return tbl["の"]
-		case 138: // ﾊ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぱ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ば"]
-			}
-			return tbl["は"]
-		case 139: // ﾋ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぴ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["び"]
-			}
-			return tbl["ひ"]
-		case 140: // ﾌ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぷ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぶ"]
-			}
-			return tbl["ふ"]
-		case 141: // ﾍ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぺ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["べ"]
-			}
-			return tbl["へ"]
-		case 142: // ﾎ
-			if len == 6 && b[5] == 159 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぽ"]
-			} else if len == 6 && b[5] == 158 && b[4] == 190 && b[3] == 239 {
-				return tbl["ぼ"]
-			} else {
-				return tbl["ほ"]
-			}
-		case 143: // ﾏ
-			return tbl["ま"]
-		case 144: // ﾐ
-			return tbl["み"]
-		case 145: // ﾑ
-			return tbl["む"]
-		case 146: // ﾒ
-			return tbl["め"]
-		case 147: // ﾓ
-			return tbl["も"]
-		case 148: // ﾔ
-			return tbl["や"]
-		case 149: // ﾕ
-			return tbl["ゆ"]
-		case 150: // ﾖ
-			return tbl["よ"]
-		case 151: // ﾗ
-			return tbl["ら"]
-		case 152: // ﾘ
-			return tbl["り"]
-		case 153: // ﾙ
-			return tbl["る"]
-		case 154: // ﾚ
-			return tbl["れ"]
-		case 155: // ﾛ
-			return tbl["ろ"]
-		case 156: // ﾜ
-			return tbl["わ"]
-		case 157: // ﾝ
-			return tbl["ん"]
+func convAsLargeH(w *word) []byte {
+	if isHan(w) && isKata(w) {
+		s := string(w.val)
+		if _, ok := tbl[s]; ok {
+			return tbl[s][0]
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Katakana -> Zenkaku Hiragana
  */
-func convAsSmallC(b []byte) []byte {
-	if len(b) != 3 {
-		return b
-	}
-	if b[0] != 227 {
-		return b
-	}
-	if b[1] == 130 { // ァ-タ
-		if b[2] >= 161 && b[2] <= 191 {
-			return []byte{227, 129, b[2] - 32}
-		}
-	} else if b[1] == 131 { // ダ-ン
-		if b[2] >= 128 && b[2] <= 159 { // ダ-ミ
-			return []byte{227, 129, b[2] + 32}
-		} else if b[2] >= 160 && b[2] <= 179 { // ム-ン
-			return []byte{227, 130, b[2] - 32}
+func convAsSmallC(w *word) []byte {
+	if isZen(w) && isKata(w) {
+		if w.val[1] == 0x82 { // ァ-タ
+			if w.val[2] >= 0xa1 && w.val[2] <= 0xbf {
+				return []byte{0xe3, 0x81, w.val[2] - 0x20}
+			}
+		} else if w.val[1] == 0x83 { // ダ-ン
+			if w.val[2] >= 0x80 && w.val[2] <= 0x9f { // ダ-ミ
+				return []byte{0xe3, 0x81, w.val[2] + 0x20}
+			} else if w.val[2] >= 0xa0 && w.val[2] <= 0xb3 { // ム-ン
+				return []byte{0xe3, 0x82, w.val[2] - 0x20}
+			}
 		}
 	}
-	return b
+	return w.val
 }
 
 /**
  * Zenkaku Hiragana -> Zenkaku Katakana
  */
-func convAsLargeC(b []byte) []byte {
-	if len(b) != 3 {
-		return b
-	}
-	if b[0] != 227 {
-		return b
-	}
-	if b[1] == 129 { // ぁ-み
-		if b[2] >= 129 && b[2] <= 159 { // ぁ-た
-			return []byte{227, 130, b[2] + 32}
-		} else if b[2] >= 160 && b[2] <= 191 { // だ-み
-			return []byte{227, 131, b[2] - 32}
-		}
-	} else if b[1] == 130 { // む-ん
-		if b[2] >= 128 && b[2] <= 147 {
-			return []byte{227, 131, b[2] + 32}
+func convAsLargeC(w *word) []byte {
+	if isZen(w) && isHira(w) {
+		if w.val[1] == 0x81 { // ぁ-み
+			if w.val[2] >= 0x81 && w.val[2] <= 0x9f { // ぁ-た
+				return []byte{0xe3, 0x82, w.val[2] + 0x20}
+			} else if w.val[2] >= 0xa0 && w.val[2] <= 0xbf { // だ-み
+				return []byte{0xe3, 0x83, w.val[2] - 0x20}
+			}
+		} else if w.val[1] == 0x82 { // む-ん
+			if w.val[2] >= 0x80 && w.val[2] <= 0x93 {
+				return []byte{0xe3, 0x83, w.val[2] + 0x20}
+			}
 		}
 	}
-	return b
+	return w.val
 }
