@@ -1,4 +1,5 @@
-module github.com/elfincafe/kanaco
+module kanaco
 
-go 1.16
+go 1.18
 
+require golang.org/x/text v0.3.7 // indirect

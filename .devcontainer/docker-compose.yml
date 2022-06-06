@@ -16,7 +16,6 @@ services:
     environment:
       - TZ=Asia/Tokyo
       - EDITOR=vi
-      - HOSTNAME=kanaco
 networks:
   kanaco:
 volumes:

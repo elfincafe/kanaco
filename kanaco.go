@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"fmt"
 )
 
 const (
@@ -358,35 +359,32 @@ func NewReader(r io.Reader, mode string) *Reader {
 
 func (r *Reader) Read(p []byte) (int, error) {
 	line, err := r.r.ReadBytes('\n')
-	buf := Byte(line, r.mode)
-	if len(p) < len(buf) {
-		p = append(p[0:], buf...)
-		return len(p), bufio.ErrBufferFull
+	if err == io.EOF {
+		return 0, err
 	}
-	copy(p, buf)
-	n := len(buf)
-	copy(p[n:], bytes.Repeat([]byte{0}, len(p)-len(buf)+1))
-	return len(p), err
+	if err != nil {
+		return 0, err
+	}
+	line = Byte(line, r.mode)
+	if len(p)<len(line) {
+		return 0, fmt.Errorf("Buffer size is not enough")
+	}
+	n := copy(p, line)
+	return n, nil
 }
 
-//func NewWriter (w io.Writer, mode string) *Writer {
-//	writer := new(Writer)
-//	writer.w = bufio.NewWriter(w)
-//	writer.mode = mode
-//	return writer
-//}
+func NewWriter (w io.Writer, mode string) *Writer {
+	writer := new(Writer)
+	writer.w = bufio.NewWriter(w)
+	writer.mode = mode
+	return writer
+}
 
-//func (w *Writer) Write (p []byte) (int, error) {
-//	return 0, nil
-//}
+func (w *Writer) Write (p []byte) (int, error) {
+	buf := Byte(p, w.mode)
+	return w.w.Write(buf)
+}
 
-//func (w *Writer) WriteString (s string) (int, error){
-//	return 0, nil
-//}
-
-//func (w *Writer) Flush () error {
-//
-//}
 func is1Byte(b []byte) bool {
 	if b[0] < 0x80 {
 		return true
