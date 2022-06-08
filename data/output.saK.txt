@@ -1,0 +1,14 @@
+ 
+ 
+0123456789
+0123456789
+abcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをん
+ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ
+!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+!＂#$%&＇()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[＼]^_`abcdefghijklmnopqrstuvwxyz{|}～
+ァアィイゥウェエォオカカ゛キキ゛クク゛ケケ゛ココ゛ササ゛シシ゛スス゛セセ゛ソソ゛タタ゛チチ゛ッツツ゛テテ゛トト゛ナニヌネノハハ゛ハ゜ヒヒ゛ヒ゜フフ゛フ゜ヘヘ゛ヘ゜ホホ゛ホ゜マミムメモャヤュユョヨラリルレロワヲン゛゜
+｠。「」、・ー・ーヽヾ
