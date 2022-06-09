@@ -23,7 +23,7 @@ KanaCo is the kana character converter inspired by the function mb_convert_kana 
 |K|Convert hankaku katakana to zenkaku katakana|
 |h|Convert zenkaku hiragana to hankaku katakana|
 |H|Convert hankaku katakana to zenkaku hiragana|
-|c|Convert zenkaku katakana to hankaku hiragana|
+|c|Convert zenkaku katakana to zenkaku hiragana|
 |C|Convert zenkaku hiragana to zenkaku katakana|
 
 ## Usage
