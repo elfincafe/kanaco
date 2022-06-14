@@ -3,427 +3,324 @@ package kanaco
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
-const (
-	bufSize = 4096
-)
-
-type testCase struct {
-	arg      *word
-	expected string
-}
-
-var ks [][3]string = [][3]string{
-	{"ｧ", "ァ", "ぁ"}, {"ｨ", "ィ", "ぃ"}, {"ｩ", "ゥ", "ぅ"}, {"ｪ", "ェ", "ぇ"}, {"ｫ", "ォ", "ぉ"},
-	{"ｱ", "ア", "あ"}, {"ｲ", "イ", "い"}, {"ｳ", "ウ", "う"}, {"ｴ", "エ", "え"}, {"ｵ", "オ", "お"},
-	{"ｶ", "カ", "か"}, {"ｷ", "キ", "き"}, {"ｸ", "ク", "く"}, {"ｹ", "ケ", "け"}, {"ｺ", "コ", "こ"},
-	{"ｶﾞ", "ガ", "が"}, {"ｷﾞ", "ギ", "ぎ"}, {"ｸﾞ", "グ", "ぐ"}, {"ｹﾞ", "ゲ", "げ"}, {"ｺﾞ", "ゴ", "ご"},
-	{"ｻ", "サ", "さ"}, {"ｼ", "シ", "し"}, {"ｽ", "ス", "す"}, {"ｾ", "セ", "せ"}, {"ｿ", "ソ", "そ"},
-	{"ｻﾞ", "ザ", "ざ"}, {"ｼﾞ", "ジ", "じ"}, {"ｽﾞ", "ズ", "ず"}, {"ｾﾞ", "ゼ", "ぜ"}, {"ｿﾞ", "ゾ", "ぞ"},
-	{"ﾀ", "タ", "た"}, {"ﾁ", "チ", "ち"}, {"ﾂ", "ツ", "つ"}, {"ﾃ", "テ", "て"}, {"ﾄ", "ト", "と"},
-	{"ﾀﾞ", "ダ", "だ"}, {"ﾁﾞ", "ヂ", "ぢ"}, {"ﾂﾞ", "ヅ", "づ"}, {"ﾃﾞ", "デ", "で"}, {"ﾄﾞ", "ド", "ど"},
-	{"ﾅ", "ナ", "な"}, {"ﾆ", "ニ", "に"}, {"ﾇ", "ヌ", "ぬ"}, {"ﾈ", "ネ", "ね"}, {"ﾉ", "ノ", "の"},
-	{"ﾊ", "ハ", "は"}, {"ﾋ", "ヒ", "ひ"}, {"ﾌ", "フ", "ふ"}, {"ﾍ", "ヘ", "へ"}, {"ﾎ", "ホ", "ほ"},
-	{"ﾊﾞ", "バ", "ば"}, {"ﾋﾞ", "ビ", "び"}, {"ﾌﾞ", "ブ", "ぶ"}, {"ﾍﾞ", "ベ", "べ"}, {"ﾎﾞ", "ボ", "ぼ"},
-	{"ﾊﾟ", "パ", "ぱ"}, {"ﾋﾟ", "ピ", "ぴ"}, {"ﾌﾟ", "プ", "ぷ"}, {"ﾍﾟ", "ペ", "ぺ"}, {"ﾎﾟ", "ポ", "ぽ"},
-	{"ﾏ", "マ", "ま"}, {"ﾐ", "ミ", "み"}, {"ﾑ", "ム", "む"}, {"ﾒ", "メ", "め"}, {"ﾓ", "モ", "も"},
-	{"ﾗ", "ラ", "ら"}, {"ﾘ", "リ", "り"}, {"ﾙ", "ル", "る"}, {"ﾚ", "レ", "れ"}, {"ﾛ", "ロ", "ろ"},
-	{"ﾜ", "ワ", "わ"}, {"ｦ", "ヲ", "を"}, {"ﾝ", "ン", "ん"},
-}
-
-var ss [][2]string = [][2]string{
-	{" ", "　"},
-}
-
-var ns [][2]string = [][2]string{
-	{"0", "０"}, {"1", "１"}, {"2", "２"}, {"3", "３"}, {"4", "４"},
-	{"5", "５"}, {"6", "６"}, {"7", "７"}, {"8", "８"}, {"9", "９"},
-}
-
-var al [][2]string = [][2]string{
-	{"a", "ａ"}, {"b", "ｂ"}, {"c", "ｃ"}, {"d", "ｄ"}, {"e", "ｅ"},
-	{"f", "ｆ"}, {"g", "ｇ"}, {"h", "ｈ"}, {"i", "ｉ"}, {"j", "ｊ"},
-	{"k", "ｋ"}, {"l", "ｌ"}, {"m", "ｍ"}, {"n", "ｎ"}, {"o", "ｏ"},
-	{"p", "ｐ"}, {"q", "ｑ"}, {"r", "ｒ"}, {"s", "ｓ"}, {"t", "ｔ"},
-	{"u", "ｕ"}, {"v", "ｖ"}, {"w", "ｗ"}, {"x", "ｘ"}, {"y", "ｙ"},
-	{"z", "ｚ"},
-}
-
-var au [][2]string = [][2]string{
-	{"A", "Ａ"}, {"B", "Ｂ"}, {"C", "Ｃ"}, {"D", "Ｄ"}, {"E", "Ｅ"},
-	{"F", "Ｆ"}, {"G", "Ｇ"}, {"H", "Ｈ"}, {"I", "Ｉ"}, {"J", "Ｊ"},
-	{"K", "Ｋ"}, {"L", "Ｌ"}, {"M", "Ｍ"}, {"N", "Ｎ"}, {"O", "Ｏ"},
-	{"P", "Ｐ"}, {"Q", "Ｑ"}, {"R", "Ｒ"}, {"S", "Ｓ"}, {"T", "Ｔ"},
-	{"U", "Ｕ"}, {"V", "Ｖ"}, {"W", "Ｗ"}, {"X", "Ｘ"}, {"Y", "Ｙ"},
-	{"Z", "Ｚ"},
-}
-
-var ms [][2]string = [][2]string{
-	{"!", "！"}, {"#", "＃"}, {"$", "＄"}, {"%", "％"}, {"&", "＆"},
-	{"(", "（"}, {")", "）"}, {"*", "＊"}, {"+", "＋"}, {",", "，"},
-	{"-", "－"}, {".", "．"}, {"/", "／"}, {":", "："}, {";", "；"},
-	{"<", "＜"}, {"=", "＝"}, {">", "＞"}, {"?", "？"}, {"@", "＠"},
-	{"[", "［"}, {"]", "］"}, {"^", "＾"}, {"_", "＿"}, {"`", "｀"},
-	{"{", "｛"}, {"|", "｜"}, {"}", "｝"},
-}
-
-var mode []string = []string{
-	"r", "R", "n", "N", "a", "A", "s", "S", "k", "K", "h", "H", "c", "C",
-}
-
-func createInput() []string {
-	f, err := os.Open("./data/input.txt")
-	if err != nil {
-		return []string{}
-	}
-	tmp, err := ioutil.ReadAll(f)
-	if err != nil {
-		return []string{}
-	}
-	return toStringSlice(tmp)
-}
-
-func createExpected(str []string, mode string) []byte {
-	path := fmt.Sprintf("./data/output.%s.txt", mode)
-	f, err := os.Open(path)
-	if err != nil {
-		return []byte{}
-	}
-	buf, err := ioutil.ReadAll(f)
-	if err != nil {
-		return []byte{}
-	}
-	return buf
-}
-
-func execConvTest(t *testing.T, f func(w *word) []byte, cases []testCase) {
-	for _, cs := range cases {
-		r := f(cs.arg)
-		if !bytes.Equal(r, []byte(cs.expected)) {
-			t.Errorf("Fail to convert. %s != %s\n", string(r), cs.expected)
-		}
-	}
-}
-
-func toStringSlice(b []byte) []string {
-	buf := make([]string, 0, len(b))
-	for _, v := range strings.Split(string(b), "") {
-		k := len(buf)
-		if k > 0 && (v == "ﾞ" || v == "ﾟ") {
-			buf[k-1] += v
-			continue
-		}
-		buf = append(buf, v)
-	}
-	return buf
+func mode4Test(path string) string {
+	basename := filepath.Base(path)
+	ext := filepath.Ext(basename)
+	mode := strings.ReplaceAll(strings.ReplaceAll(basename, "output.", ""), ext, "")
+	return mode
 }
 
 func TestByte(t *testing.T) {
-	str := createInput()
-	for _, m := range mode {
-		ret := Byte([]byte(strings.Join(str, "")), m)
-		inputs := toStringSlice(ret)
-		outputs := toStringSlice(createExpected(str, m))
-		for k, v := range inputs {
-			if !bytes.Equal([]byte(v), []byte(outputs[k])) {
-				t.Errorf("[Byte] Fail to convert. (%s mode)\nExpected: %s\nReturned: %s\n", m, outputs[k], v)
-			}
+	content, err := ioutil.ReadFile("./data/input.txt")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	paths, err := filepath.Glob("./data/output.*.txt")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	for _, path := range paths {
+		mode := mode4Test(path)
+		expect, err := ioutil.ReadFile(path)
+		if err != nil {
+			t.Errorf(err.Error())
 		}
-		break
+		result := Byte(content, mode)
+		if strings.Compare(string(result), string(expect)) != 0 {
+			expects := bytes.Split(expect, []byte("\n"))
+			results := bytes.Split(result, []byte("\n"))
+			msg := strings.Builder{}
+			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
+			for k, e := range expects {
+				r := results[k]
+				fmt.Printf("[%d] %s(%T) <-> %s\n", k, e, e, results[k])
+				if strings.Compare(string(r), string(e)) != 0 {
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.Write(e)
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.Write(r)
+					msg.WriteString("\n")
+				}
+			}
+			t.Errorf(msg.String())
+		}
 	}
 }
 
 func TestString(t *testing.T) {
-	str := createInput()
-	for _, m := range mode {
-		ret := String(strings.Join(str, ""), m)
-		inputs := toStringSlice([]byte(ret))
-		outputs := toStringSlice(createExpected(str, m))
-		for k, v := range inputs {
-			if !bytes.Equal([]byte(v), []byte(outputs[k])) {
-				t.Errorf("[String] Fail to convert. (%s mode)\nExpected: %s\nReturned: %s\n", m, outputs[k], v)
-			}
+	content, err := ioutil.ReadFile("./data/input.txt")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	paths, err := filepath.Glob("./data/output.*.txt")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	for _, path := range paths {
+		mode := mode4Test(path)
+		expect, err := ioutil.ReadFile(path)
+		if err != nil {
+			t.Errorf(err.Error())
 		}
-		break
+		result := String(string(content), mode)
+		if strings.Compare(string(result), string(expect)) != 0 {
+			expects := bytes.Split(expect, []byte("\n"))
+			results := strings.Split(result, "\n")
+			msg := strings.Builder{}
+			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
+			for k, e := range expects {
+				r := results[k]
+				if strings.Compare(string(r), string(e)) != 0 {
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.Write(e)
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.WriteString(r)
+					msg.WriteString("\n")
+				}
+			}
+			t.Errorf(msg.String())
+		}
 	}
 }
 
-func TestReaderRead(t *testing.T) {
-	// for _, m := range mode {
-	// 	f, err := os.Open("./data/input.txt")
-	// 	if err != nil {
-	// 		t.Errorf("[NewReader] Fail to open test file.")
-	// 	}
-	// 	r := NewReader(f, m)
+func TestNewReader(t *testing.T) {
+	f, _ := os.Open("./data/input.txt")
+	r := NewReader(f, "a")
+	tp := fmt.Sprintf("%T", r)
+	if tp != "*kanaco.Reader" {
+		t.Errorf("Reader is invalid (%s)", tp)
+	}
+}
 
-	// 	buf := make([]byte, 4096)
-	// 	for {
-	// 		line := make([]byte, 4096)
-	// 		_, err := r.Read(line)
-	// 		if err == io.EOF {
-	// 			break
-	// 		}
-	// 		if err != nil {
-	// 			break
-	// 		}
-	// 		buf = append(buf, line...)
-	// 	}
-	// 	f.Close()
-	// 	expected := createExpected(strings.Split(string(buf), ""), m)
-	// 	for k, s := range strings.Split(string(buf), "") {
-	// 		if !bytes.Equal([]byte(expected[k]), []byte(s)) {
-	// 			t.Errorf("[NewReader] Expected:%s Returned:%s\n", expected[k], s)
-	// 		}
-	// 	}
-	// 	break
-	// }
+func TestRead(t *testing.T) {
+	paths, _ := filepath.Glob("./data/output.*.txt")
+	for _, path := range paths {
+		expects, _ := ioutil.ReadFile(path)
+		mode := mode4Test(path)
+		f, _ := os.Open("./data/input.txt")
+		r := NewReader(f, mode)
+		results := []byte{}
+		for {
+			buf := make([]byte, 4096)
+			_, err := r.Read(buf)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				t.Errorf(err.Error())
+				break
+			}
+			results = append(results, buf...)
+		}
+		if strings.Compare(string(results), string(expects)) == 0 {
+			rLines := bytes.Split(results, []byte("\n"))
+			eLines := bytes.Split(expects, []byte("\n"))
+			msg := strings.Builder{}
+			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
+			for k, et := range eLines {
+				rs := rLines[k]
+				if strings.Compare(string(et), string(rs)) != 0 {
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.Write(et)
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.Write(rs)
+					msg.WriteString("\n")
+				}
+			}
+			t.Errorf(msg.String())
+		}
+	}
 }
 
 func TestNewWriter(t *testing.T) {
-
+	path := fmt.Sprintf("%s/kanaco_test.txt", os.TempDir())
+	f, _ := os.Create(path)
+	defer os.Remove(f.Name())
+	w := NewWriter(f, "a")
+	tp := fmt.Sprintf("%T", w)
+	if tp != "*kanaco.Writer" {
+		t.Errorf("Writer is invalid (%s)", tp)
+	}
 }
 
-/**
- * Zenkaku Space -> Hankaku Space
- */
-func TestConvAsSmallS(t *testing.T) {
-	w := &word{[]byte(ss[0][1]), zenkaku + space, len(ss[0][1])}
-	e := ss[0][0]
-	c := testCase{w, e}
-	cases := []testCase{c}
-	execConvTest(t, convAsSmallS, cases)
+func TestWrite(t *testing.T) {
+	paths, _ := filepath.Glob("./data/output.a.txt")
+	for _, path := range paths {
+		expects, _ := ioutil.ReadFile(path)
+		mode := mode4Test(path)
+		input, _ := ioutil.ReadFile("./data/input.txt")
+		f, _ := os.CreateTemp(os.TempDir(), "output.txt")
+		defer os.Remove(f.Name())
+		w := NewWriter(f, mode)
+		w.Write(input)
+		f.Close()
+		results, _ := ioutil.ReadFile(f.Name())
+		if strings.Compare(string(results), string(expects)) != 0 {
+			rLines := bytes.Split(results, []byte("\n"))
+			eLines := bytes.Split(expects, []byte("\n"))
+			msg := strings.Builder{}
+			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
+			for k, et := range eLines {
+				rs := rLines[k]
+				if strings.Compare(string(et), string(rs)) != 0 {
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.Write(et)
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.Write(rs)
+					msg.WriteString("\n")
+				}
+			}
+			t.Errorf(msg.String())
+		}
+	}
 }
 
-/**
- * Hankaku Space -> Zenkaku Space
- */
-func TestConvAsLargeS(t *testing.T) {
-	w := &word{[]byte(ss[0][0]), hankaku + space, len(ss[0][0])}
-	e := ss[0][1]
-	c := testCase{w, e}
-	cases := []testCase{c}
-	execConvTest(t, convAsLargeS, cases)
+func TestIs1Byte(t *testing.T) {
+	cases := map[string]bool{
+		"!": true, "a": true, "0": true, "}": true, "~": true,
+		"¡": false, "¢": false, "߹": false, "ߺ": false,
+		"✀": false, "ぁ": false, "ァ": false, "ｦ": false,
+		"🌀": false, "💯": false, "😀": false, "🧦": false,
+	}
+	for input, output := range cases {
+		if output != is1Byte([]byte(input)) {
+			t.Errorf(`Function is1Byte returns %v for "%s".`, output, input)
+		}
+	}
 }
 
-/**
- * Zenkaku Numeric -> Hankaku Numeric
- */
-func TestConvAsSmallN(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ns {
-		w := &word{[]byte(n[1]), zenkaku + numeric, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestIs2Bytes(t *testing.T) {
+	cases := map[string]bool{
+		"!": false, "a": false, "0": false, "}": false, "~": false,
+		"¡": true, "¢": true, "߹": true, "ߺ": true,
+		"✀": false, "ぁ": false, "ァ": false, "ｦ": false,
+		"🌀": false, "💯": false, "😀": false, "🧦": false,
 	}
-	execConvTest(t, convAsSmallN, cases)
+	for input, output := range cases {
+		if output != is2Bytes([]byte(input)) {
+			t.Errorf(`Function is2Bytes returns %v for "%s".`, output, input)
+		}
+	}
 }
 
-/**
- * Hankaku Numeric -> Zenkaku Numeric
- */
-func TestConvAsLargeN(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ns {
-		w := &word{[]byte(n[0]), hankaku + numeric, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestIs3Bytes(t *testing.T) {
+	cases := map[string]bool{
+		"!": false, "a": false, "0": false, "}": false, "~": false,
+		"¡": false, "¢": false, "߹": false, "ߺ": false,
+		"✀": true, "ぁ": true, "ァ": true, "ｦ": true,
+		"🌀": false, "💯": false, "😀": false, "🧦": false,
 	}
-	execConvTest(t, convAsLargeN, cases)
+	for input, output := range cases {
+		if output != is3Bytes([]byte(input)) {
+			t.Errorf(`Function is3Bytes returns %v for "%s".`, output, input)
+		}
+	}
 }
 
-/**
- * Zenkaku Alphabet -> Hankaku Alphabet
- */
-func TestConvAsSmallR(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range al {
-		w := &word{[]byte(n[1]), zenkaku + alphabet + lowercase, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestIs4Bytes(t *testing.T) {
+	cases := map[string]bool{
+		"!": false, "a": false, "0": false, "}": false, "~": false,
+		"¡": false, "¢": false, "߹": false, "ߺ": false,
+		"✀": false, "ぁ": false, "ァ": false, "ｦ": false,
+		"🌀": true, "💯": true, "😀": true, "🧦": true,
 	}
-	for _, n := range au {
-		w := &word{[]byte(n[1]), zenkaku + alphabet + uppercase, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+	for input, output := range cases {
+		if output != is4Bytes([]byte(input)) {
+			t.Errorf(`Function is4Bytes returns %v for "%s".`, output, input)
+		}
 	}
-	execConvTest(t, convAsSmallR, cases)
 }
 
-/**
- * Hankaku Alphabet -> Zenkaku Alphabet
- */
-func TestConvAsLargeR(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range al {
-		w := &word{[]byte(n[0]), hankaku + alphabet + lowercase, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestIsVoiced(t *testing.T) {
+	cases := map[string]bool{
+		"ﾊ": false, "ﾊﾞ": true, "ﾊﾟ": false, "ハ": false, "バ": false,
 	}
-	for _, n := range au {
-		w := &word{[]byte(n[0]), hankaku + alphabet + uppercase, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
+	for input, output := range cases {
+		if output != isVoiced([]byte(input)) {
+			t.Errorf(`Function isVoiced returns %v for "%s".`, output, input)
+		}
 	}
-	execConvTest(t, convAsLargeR, cases)
 }
 
-/**
- * Zenkaku AlphaNumeric -> Hankaku AlphaNumeric
- * !-}(Excluding ",',\)
- */
-func TestConvAsSmallA(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ns {
-		w := &word{[]byte(n[1]), zenkaku + alphanumeric + numeric, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestIsSemiVoiced(t *testing.T) {
+	cases := map[string]bool{
+		"ﾊ": false, "ﾊﾞ": false, "ﾊﾟ": true, "ハ": false, "バ": false,
 	}
-	for _, n := range al {
-		w := &word{[]byte(n[1]), zenkaku + alphanumeric + alphabet + lowercase, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+	for input, output := range cases {
+		if output != isSemiVoiced([]byte(input)) {
+			t.Errorf(`Function isSemiVoiced returns %v for "%s".`, output, input)
+		}
 	}
-	for _, n := range au {
-		w := &word{[]byte(n[1]), zenkaku + alphanumeric + alphabet + uppercase, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	for _, n := range ms {
-		w := &word{[]byte(n[1]), zenkaku + alphanumeric, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsSmallA, cases)
 }
 
-/**
- * Hankaku AlphaNumeric -> Zenkaku AlphaNumeric
- * !-}(Excluding ",',\)
- */
-func TestConvAsLargeA(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ns {
-		w := &word{[]byte(n[0]), hankaku + alphanumeric + numeric, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestLowerR(t *testing.T) {
+	cases := map[string]string{
+		"ａ": "a", "ｚ": "z", "Ａ": "A", "Ｚ": "Z",
+		"/": "/", "0": "0", ":": ":",
 	}
-	for _, n := range al {
-		w := &word{[]byte(n[0]), hankaku + alphanumeric + alphabet + lowercase, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
+	for input, output := range cases {
+		c := extract([]byte(input))
+		r := lowerR(c)
+		if strings.Compare(string(r), output) != 0 {
+			t.Errorf(`Function lowerR returns "%s" for "%s", expecting "%s".`, string(r), input, output)
+		}
 	}
-	for _, n := range au {
-		w := &word{[]byte(n[0]), hankaku + alphanumeric + alphabet + uppercase, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	for _, n := range ms {
-		w := &word{[]byte(n[0]), hankaku + alphanumeric, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsLargeA, cases)
 }
 
-/**
- * Zenkaku Katakana -> Hankaku Katakana
- */
-func TestConvAsSmallK(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[1]), zenkaku + katakana, len(n[1])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
+func TestUpperR(t *testing.T) {
+	cases := map[string]string{
+		"a": "ａ", "z": "ｚ", "A": "Ａ", "Z": "Ｚ",
+		"/": "/", "0": "0", ":": ":",
 	}
-	execConvTest(t, convAsSmallK, cases)
+	for input, output := range cases {
+		c := extract([]byte(input))
+		r := upperR(c)
+		if strings.Compare(string(r), output) != 0 {
+			t.Errorf(`Function upperR returns "%s" for "%s", expecting "%s".`, string(r), input, output)
+		}
+	}
 }
 
-/**
- * Hankaku Katakana -> Zenkaku Katakana
- */
-func TestConvAsLargeK(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[0]), hankaku + katakana, len(n[0])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsLargeK, cases)
+func TestLowerN(t *testing.T) {
 }
 
-/**
- * Zenkaku Hiragana -> Hankaku Katakana
- */
-func TestConvAsSmallH(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[2]), zenkaku + hiragana, len(n[2])}
-		e := n[0]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsSmallH, cases)
+func TestUpperN(t *testing.T) {
 }
 
-/**
- * Hankaku Katakana -> Zenkaku Hiragana
- */
-func TestConvAsLargeH(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[0]), hankaku + katakana, len(n[0])}
-		e := n[2]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsLargeH, cases)
+func TestLowerA(t *testing.T) {
 }
 
-/**
- * Zenkaku Katakana -> Zenkaku Hiragana
- */
-func TestConvAsSmallC(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[1]), zenkaku + katakana, len(n[1])}
-		e := n[2]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsSmallC, cases)
+func TestUpperA(t *testing.T) {
 }
 
-/**
- * Zenkaku Hiragana -> Zenkaku Katakana
- */
-func TestConvAsLargeC(t *testing.T) {
-	cases := []testCase{}
-	for _, n := range ks {
-		w := &word{[]byte(n[2]), zenkaku + hiragana, len(n[2])}
-		e := n[1]
-		c := testCase{w, e}
-		cases = append(cases, c)
-	}
-	execConvTest(t, convAsLargeC, cases)
+func TestLowerS(t *testing.T) {
+}
+
+func TestUpperS(t *testing.T) {
+}
+
+func TestLowerK(t *testing.T) {
+}
+
+func TestUpperK(t *testing.T) {
+}
+
+func TestLowerH(t *testing.T) {
+}
+
+func TestUpperH(t *testing.T) {
+}
+
+func TestLowerC(t *testing.T) {
+}
+
+func TestUpperC(t *testing.T) {
 }
