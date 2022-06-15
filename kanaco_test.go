@@ -11,11 +11,48 @@ import (
 	"testing"
 )
 
+var (
+	output = "output.??.txt"
+)
+
 func mode4Test(path string) string {
 	basename := filepath.Base(path)
 	ext := filepath.Ext(basename)
-	mode := strings.ReplaceAll(strings.ReplaceAll(basename, "output.", ""), ext, "")
-	return mode
+	tmp := strings.Split(strings.ReplaceAll(strings.ReplaceAll(basename, "output.", ""), ext, ""), ".")
+	mode := strings.Builder{}
+	for _, m := range tmp {
+		switch m {
+		case "la":
+			mode.WriteString("a")
+		case "lc":
+			mode.WriteString("c")
+		case "lh":
+			mode.WriteString("h")
+		case "lk":
+			mode.WriteString("k")
+		case "ln":
+			mode.WriteString("n")
+		case "lr":
+			mode.WriteString("r")
+		case "ls":
+			mode.WriteString("s")
+		case "ua":
+			mode.WriteString("A")
+		case "uc":
+			mode.WriteString("C")
+		case "uh":
+			mode.WriteString("H")
+		case "uk":
+			mode.WriteString("K")
+		case "un":
+			mode.WriteString("N")
+		case "ur":
+			mode.WriteString("R")
+		case "us":
+			mode.WriteString("S")
+		}
+	}
+	return mode.String()
 }
 
 func TestByte(t *testing.T) {
@@ -23,7 +60,7 @@ func TestByte(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	paths, err := filepath.Glob("./data/output.*.txt")
+	paths, err := filepath.Glob("./data/" + output)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -60,7 +97,7 @@ func TestString(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	paths, err := filepath.Glob("./data/output.*.txt")
+	paths, err := filepath.Glob("./data/" + output)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -101,7 +138,7 @@ func TestNewReader(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	paths, _ := filepath.Glob("./data/output.*.txt")
+	paths, _ := filepath.Glob("./data/" + output)
 	for _, path := range paths {
 		expects, _ := ioutil.ReadFile(path)
 		mode := mode4Test(path)
@@ -152,7 +189,7 @@ func TestNewWriter(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	paths, _ := filepath.Glob("./data/output.a.txt")
+	paths, _ := filepath.Glob("./data/" + output)
 	for _, path := range paths {
 		expects, _ := ioutil.ReadFile(path)
 		mode := mode4Test(path)
