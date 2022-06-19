@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	output = "output.??.txt"
+	output = "output.*.txt"
 )
 
 func mode4Test(path string) string {
@@ -158,49 +158,6 @@ func TestRead(t *testing.T) {
 			results = append(results, buf...)
 		}
 		if strings.Compare(string(results), string(expects)) == 0 {
-			rLines := bytes.Split(results, []byte("\n"))
-			eLines := bytes.Split(expects, []byte("\n"))
-			msg := strings.Builder{}
-			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
-			for k, et := range eLines {
-				rs := rLines[k]
-				if strings.Compare(string(et), string(rs)) != 0 {
-					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
-					msg.Write(et)
-					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
-					msg.Write(rs)
-					msg.WriteString("\n")
-				}
-			}
-			t.Errorf(msg.String())
-		}
-	}
-}
-
-func TestNewWriter(t *testing.T) {
-	path := fmt.Sprintf("%s/kanaco_test.txt", os.TempDir())
-	f, _ := os.Create(path)
-	defer os.Remove(f.Name())
-	w := NewWriter(f, "a")
-	tp := fmt.Sprintf("%T", w)
-	if tp != "*kanaco.Writer" {
-		t.Errorf("Writer is invalid (%s)", tp)
-	}
-}
-
-func TestWrite(t *testing.T) {
-	paths, _ := filepath.Glob("./data/" + output)
-	for _, path := range paths {
-		expects, _ := ioutil.ReadFile(path)
-		mode := mode4Test(path)
-		input, _ := ioutil.ReadFile("./data/input.txt")
-		f, _ := os.CreateTemp(os.TempDir(), "output.txt")
-		defer os.Remove(f.Name())
-		w := NewWriter(f, mode)
-		w.Write(input)
-		f.Close()
-		results, _ := ioutil.ReadFile(f.Name())
-		if strings.Compare(string(results), string(expects)) != 0 {
 			rLines := bytes.Split(results, []byte("\n"))
 			eLines := bytes.Split(expects, []byte("\n"))
 			msg := strings.Builder{}

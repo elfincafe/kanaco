@@ -12,11 +12,6 @@ type Reader struct {
 	mode string
 }
 
-type Writer struct {
-	w    io.Writer
-	mode string
-}
-
 type char struct {
 	val  []byte
 	mode []byte
@@ -373,18 +368,6 @@ func (r *Reader) Read(p []byte) (int, error) {
 	}
 	n := copy(p, line)
 	return n, nil
-}
-
-func NewWriter(w io.Writer, mode string) *Writer {
-	writer := new(Writer)
-	writer.w = w
-	writer.mode = mode
-	return writer
-}
-
-func (w *Writer) Write(p []byte) (int, error) {
-	buf := Byte(p, w.mode)
-	return w.w.Write(buf)
 }
 
 func is1Byte(b []byte) bool {
