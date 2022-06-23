@@ -110,7 +110,6 @@ bool is_semi_voiced(char *s, int len) {
 
 void extract(character *c, char *s, int len) {
     c->len = 1;
-
     if (is_1byte(s, len)) {
         uint8_t c0 = *s & 0xff;
         if (c0 == 0x20) {  // Space
@@ -214,8 +213,6 @@ void extract(character *c, char *s, int len) {
         *(c->val + i) = *(s + i) & 0xff;
     }
     *(c->val + c->len) = 0x00;
-
-    return;
 }
 
 void lower_r(character *c) {
@@ -332,7 +329,6 @@ void upper_s(character *c) {
     c->cval[2] = (char)(0x80 & 0xff);
     c->cval[3] = 0x00;
     c->clen = 3;
-    printf("<S> \"%s\" -> \"%s\"\n", c->val, c->cval);
 }
 
 void lower_k(character *c) {
@@ -653,11 +649,12 @@ void upper_k(character *c) {
     if (!(c->conv & CNV_UPPER_K)) {
         return;
     }
-    uint8_t c1 = *(c->val) & 0xff, c2 = *(c->val + 2) & 0xff, c5 = 0x00;
+    uint8_t c1 = *(c->val+1) & 0xff, c2 = *(c->val + 2) & 0xff, c5 = 0x00;
     if (c->len > 5) {
         c5 = *(c->val + 5) & 0xff;
     }
 
+    c->clen = 3;
     if (c1 == 0xbd) {
         switch (c2) {
             case 0xa1: /* ｡ */
@@ -1203,6 +1200,7 @@ void upper_h(character *c) {
         c5 = *(c->val + 5) & 0xff;
     }
 
+    c->clen = 3;
     if (c1 == 0xbd) {
         switch (c2) {
             case 0xa1: /* ｡ */
@@ -1431,31 +1429,28 @@ void lower_c(character *c) {
     }
     uint8_t c0 = (uint8_t)c->val[0], c1 = (uint8_t)c->val[1],
             c2 = (uint8_t)c->val[2];
+    c->clen = 3;
     switch (c1) {
         case 0x82:  // ァ - タ
             if (c2 >= 0xa1 && c2 <= 0xbf) {
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x80 & 0xff);
-                c->cval[2] = (char)((c2 - 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval +0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x80 & 0xff);
+                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
         case 0x83:                           // ダ - ン
             if (c2 >= 0x80 && c2 <= 0x9f) {  // ダ - ミ
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x81 & 0xff);
-                c->cval[2] = (char)((c2 + 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x81 & 0xff);
+                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0xa0 && c2 <= 0xb3) {  // ム - ン
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x82 & 0xff);
-                c->cval[2] = (char)((c2 - 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x82 & 0xff);
+                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
             } else if (c2 >= 0xbd && c2 <= 0xbe) {  // ヽヾ
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x82 & 0xff);
-                c->cval[2] = (char)((c2 - 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x82 & 0xff);
+                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
     }
@@ -1467,31 +1462,28 @@ void upper_c(character *c) {
     }
     uint8_t c0 = (uint8_t)c->val[0], c1 = (uint8_t)c->val[1],
             c2 = (uint8_t)c->val[2];
+            c->clen = 3;
     switch (c1) {
         case 0x81:
             if (c2 >= 0x81 && c2 <= 0x9f) {  // ぁ - た
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x82 & 0xff);
-                c->cval[2] = (char)((c2 + 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x82 & 0xff);
+                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0xa0 && c2 <= 0xbf) {  // だ - み
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x83 & 0xff);
-                c->cval[2] = (char)((c2 - 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x83 & 0xff);
+                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
         case 0x82:
             if (c2 >= 0x80 && c2 <= 0x93) {  // む - ん
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x83 & 0xff);
-                c->cval[2] = (char)((c2 + 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x83 & 0xff);
+                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0x9d && c2 <= 0x9e) {  // ゝゞ
-                c->cval[0] = (char)(0xe3 & 0xff);
-                c->cval[1] = (char)(0x83 & 0xff);
-                c->cval[2] = (char)((c2 + 0x20) & 0xff);
-                c->clen = 3;
+                *(c->cval+0) = (char)(0xe3 & 0xff);
+                *(c->cval+1) = (char)(0x83 & 0xff);
+                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
             }
             break;
     }
@@ -1499,14 +1491,15 @@ void upper_c(character *c) {
 
 void unknown(character *c) {
     for (uint8_t i = 0; i < c->len; i++) {
-        *(c->cval + i) = (char)(*(c->val + i));
+        *(c->cval + i) = (char)(*(c->val + i) & 0xff);
     }
+    c->clen = c->len;
+    *(c->cval + c->clen) = 0x00;
 }
 
 void conv(character *c, char *mode) {
     int i = 0;
     while (*(mode + i) != 0x00) {
-        // printf("Cnd: %c %d\n", *(mode+i), c->conv);
         switch (*(mode + i)) {
             case 'r':
                 lower_r(c);
@@ -1550,16 +1543,15 @@ void conv(character *c, char *mode) {
             case 'C':
                 upper_c(c);
                 break;
-            default:
-                unknown(c);
-                break;
         }
-        // printf("Len: %d\n", c->clen);
         if (c->clen > 0) {
             break;
         }
         i++;
     };
+    if (c->clen==0) {
+        unknown(c);
+    }
 }
 
 char *create_mode(char *mode_str, int mode_len) {
@@ -1617,20 +1609,31 @@ void init_character(character *c) {
     c->clen = 0;
 }
 
-int convert(char *str, int str_len, char *mode_str, int mode_len, char *ret,
-            int ret_len) {
+char *convert(char *str, int str_len, char *mode_str, int mode_len) {
+
     char *mode = create_mode(mode_str, mode_len);
 
-    int offset = 0, offset_ret = 0, total_len = 0;
-    character c;
+    // Allocate for return value
+    int ret_len = 4096;
+    char *ret = (char *)malloc(ret_len);
+    if (ret == NULL) {
+        return NULL;
+    }
 
+    character c;
+    int offset = 0, offset_ret = 0, total_len = 0;
     while (str_len > 0) {
         init_character(&c);
         extract(&c, str + offset, str_len);
         conv(&c, mode);
         total_len += c.clen;
-        if (total_len > ret_len) {
-            return 1;
+        if (ret_len - total_len < 32) {
+            char *tmp = (char *)realloc(ret, ret_len + 4096);
+            if (tmp == NULL) {
+                return NULL;
+            }
+            ret = tmp;
+            ret_len += 4096;
         }
         strncpy(ret + offset_ret, c.cval, c.clen);
         offset += c.len;
@@ -1641,5 +1644,5 @@ int convert(char *str, int str_len, char *mode_str, int mode_len, char *ret,
 
     free(mode);
 
-    return 0;
+    return ret;
 }

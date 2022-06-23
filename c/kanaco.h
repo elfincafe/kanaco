@@ -1,6 +1,6 @@
-#ifndef _KANACO_H
-#define _KANACO_H
+#ifndef _INCLUDE_KANACO_H
+#define _INCLUDE_KANACO_H
 
-int convert(char*, int, char*, int, char*, int);
+extern char* convert(char*, int, char*, int);
 
 #endif
