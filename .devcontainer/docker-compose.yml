@@ -2,7 +2,7 @@ version: "3.3"
 services:
   app:
     image: kanaco:dev
-    container_name: Kanaco
+    container_name: KanaCo
     build:
       context: .
       dockerfile: ./Dockerfile

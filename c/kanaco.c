@@ -6,37 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CNV_UNKNOWN 0
-#define CNV_LOWER_R 1
-#define CNV_UPPER_R 2
-#define CNV_LOWER_N 4
-#define CNV_UPPER_N 8
-#define CNV_LOWER_A 16
-#define CNV_UPPER_A 32
-#define CNV_LOWER_S 64
-#define CNV_UPPER_S 128
-#define CNV_LOWER_K 256
-#define CNV_UPPER_K 512
-#define CNV_LOWER_H 1028
-#define CNV_UPPER_H 2048
-#define CNV_LOWER_C 4096
-#define CNV_UPPER_C 8192
-
-#define IDX_LOWER_K 0
-#define IDX_UPPER_K 1
-#define IDX_LOWER_H 2
-#define IDX_UPPER_H 3
-#define IDX_LOWER_C 4
-#define IDX_UPPER_C 5
-
-typedef struct _character {
-    uint8_t val[8];
-    uint8_t len;
-    uint16_t conv;  // CNV_LOWER_* or CNV_UPPER_*
-    char cval[8];   // converted value
-    uint8_t clen;   // converted value length;
-} character;
-
 bool is_1byte(char *s, int len) {
     uint8_t c0 = *s & 0xff;
     if (len > 0 && c0 < 0x80) {
@@ -106,113 +75,6 @@ bool is_semi_voiced(char *s, int len) {
         }
     }
     return false;
-}
-
-void extract(character *c, char *s, int len) {
-    c->len = 1;
-    if (is_1byte(s, len)) {
-        uint8_t c0 = *s & 0xff;
-        if (c0 == 0x20) {  // Space
-            c->conv = CNV_UPPER_S;
-        } else if (c0 >= 0x30 && c0 <= 0x39) {  // 0 - 9
-            c->conv = CNV_UPPER_A | CNV_UPPER_N;
-        } else if (c0 >= 0x41 && c0 <= 0x5a) {  // A - Z
-            c->conv = CNV_UPPER_A | CNV_UPPER_R;
-        } else if (c0 >= 0x61 && c0 <= 0x7a) {  // a - z
-            c->conv = CNV_UPPER_A | CNV_UPPER_R;
-        } else if (c0 >= 0x21 && c0 <= 0x7d && c0 != 0x22 && c0 != 0x27 &&
-                   c0 != 0x5c) {
-            c->conv = CNV_UPPER_A;
-        }
-    } else if (is_2bytes(s, len)) {
-        c->len = 2;
-    } else if (is_3bytes(s, len)) {
-        uint8_t c0 = *s & 0xff, c1 = *(s + 1) & 0xff, c2 = *(s + 2) & 0xff;
-        c->len = 3;
-        if (c0 == 0xef) {
-            if (c1 == 0xbc) {
-                if (c2 >= 0x90 && c2 <= 0x99) {  // ０ - ９
-                    c->conv = CNV_LOWER_A | CNV_LOWER_N;
-                } else if (c2 >= 0xa1 && c2 <= 0xba) {  // Ａ - Ｚ
-                    c->conv = CNV_LOWER_A | CNV_LOWER_R;
-                } else if (c2 != 0x82 && c2 != 0x87 &&
-                           c2 != 0xbc) {  // except ＂ ＇ ＼
-                    c->conv = CNV_LOWER_A;
-                }
-            } else if (c1 == 0xbd) {
-                if (c2 >= 0x81 && c2 <= 0x9a) {  // ａ - ｚ
-                    c->conv = CNV_LOWER_A | CNV_LOWER_R;
-                } else if (c2 >= 0x80 && c2 <= 0x9d) {  // ｀ - ｝
-                    c->conv = CNV_LOWER_A;
-                } else if (c2 >= 0xa1 && c2 <= 0xbf) {  // ｡ ｢ ｣ ､ ･ ｦ - ｿ
-                    if (is_voiced(s, len)) {            // voiced
-                        c->len = 6;
-                        if (c2 == 0xb3) {
-                            c->conv = CNV_UPPER_K;
-                        } else {
-                            c->conv = CNV_UPPER_H | CNV_UPPER_K;
-                        }
-                    } else {
-                        c->conv = CNV_UPPER_H | CNV_UPPER_K;
-                    }
-                }
-            } else if (c1 == 0xbe) {
-                if (c2 >= 0x80 && c2 <= 0x84) {  // ﾀ - ﾄ
-                    if (is_voiced(s, len)) {
-                        c->len = 6;
-                    }
-                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
-                } else if (c2 >= 0x8a && c2 <= 0x8e) {  // ﾊ - ﾎ
-                    if (is_voiced(s, len) ||
-                        is_semi_voiced(s, len)) {  // voiced or semi voiced
-                        c->len = 6;
-                    }
-                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
-                } else if (c2 >= 0x85 && c2 <= 0x9f) {  // ﾅ - ﾝﾞﾟ
-                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
-                }
-            }
-        } else if (c0 == 0xe3) {
-            if (c1 == 0x80) {
-                if (c2 == 0x80) {  // Space
-                    c->conv = CNV_LOWER_S;
-                } else if (c2 >= 0x81 && c2 <= 0x82) {  // 、。
-                    c->conv = CNV_LOWER_C | CNV_LOWER_H | CNV_LOWER_K;
-                }
-            } else if (c1 == 0x81) {
-                if (c2 >= 0x81 && c2 <= 0xbf) {  // ぁ - み
-                    c->conv = CNV_UPPER_C | CNV_LOWER_H;
-                }
-            } else if (c2 == 0x82) {
-                if (c2 >= 0x80 && c2 <= 0x93) {  // む - ん
-                    c->conv = CNV_UPPER_C | CNV_LOWER_H;
-                } else if (c2 >= 0x9b && c2 <= 0x9c) {  // ゛゜
-                    c->conv = CNV_LOWER_H | CNV_LOWER_K;
-                } else if (c2 >= 0x9d && c2 <= 0x9e) {  // ゝゞ
-                    c->conv = CNV_UPPER_C;
-                } else if (c2 >= 0xa1 && c2 <= 0xbf) {  // ァ - タ
-                    c->conv = CNV_LOWER_C | CNV_LOWER_K;
-                }
-            } else if (c1 == 0x83) {
-                if (c2 >= 0x80 && c2 <= 0xb4) {  // チ - ヴ
-                    c->conv = CNV_LOWER_C | CNV_LOWER_K;
-                } else if (c2 >= 0xbb && c2 <= 0xbc) {  // ・ー
-                    c->conv = CNV_LOWER_H | CNV_LOWER_K;
-                } else if (c2 >= 0xbd && c2 <= 0xbe) {  // ヽ ヾ
-                    c->conv = CNV_LOWER_C;
-                }
-            }
-        }
-    } else if (is_4bytes(s, len)) {
-        c->len = 4;
-    } else {
-        c->len = 1;
-    }
-
-    for (int i = 0; i < c->len; i++) {
-        *(c->val + i) = *(s + i) & 0xff;
-    }
-    *(c->val + c->len) = 0x00;
 }
 
 void lower_r(character *c) {
@@ -649,11 +511,10 @@ void upper_k(character *c) {
     if (!(c->conv & CNV_UPPER_K)) {
         return;
     }
-    uint8_t c1 = *(c->val+1) & 0xff, c2 = *(c->val + 2) & 0xff, c5 = 0x00;
+    uint8_t c1 = *(c->val + 1) & 0xff, c2 = *(c->val + 2) & 0xff, c5 = 0x00;
     if (c->len > 5) {
         c5 = *(c->val + 5) & 0xff;
     }
-
     c->clen = 3;
     if (c1 == 0xbd) {
         switch (c2) {
@@ -682,7 +543,7 @@ void upper_k(character *c) {
                 strncpy(c->cval, "ィ", c->clen);
                 break;
             case 0xa9:
-                strncpy(c->cval, (c5 == 0x9e ? "ヴ" : "ウ"), c->clen);
+                strncpy(c->cval, "ゥ", c->clen);
                 break;
             case 0xaa:
                 strncpy(c->cval, "ェ", c->clen);
@@ -712,7 +573,7 @@ void upper_k(character *c) {
                 strncpy(c->cval, "イ", c->clen);
                 break;
             case 0xb3:
-                strncpy(c->cval, "ウ", c->clen);
+                strncpy(c->cval, (c5 == 0x9e ? "ヴ" : "ウ"), c->clen);
                 break;
             case 0xb4:
                 strncpy(c->cval, "エ", c->clen);
@@ -872,6 +733,12 @@ void upper_k(character *c) {
                 break;
             case 0x9d:
                 strncpy(c->cval, "ン", c->clen);
+                break;
+            case 0x9e: /* ﾞ */
+                strncpy(c->cval, "゛", c->clen);
+                break;
+            case 0x9f: /* ﾟ */
+                strncpy(c->cval, "゜", c->clen);
                 break;
         }
     }
@@ -1419,6 +1286,12 @@ void upper_h(character *c) {
             case 0x9d:
                 strncpy(c->cval, "ん", c->clen);
                 break;
+            case 0x9e: /* ﾞ */
+                strncpy(c->cval, "゛", c->clen);
+                break;
+            case 0x9f: /* ﾟ */
+                strncpy(c->cval, "゜", c->clen);
+                break;
         }
     }
 }
@@ -1433,24 +1306,24 @@ void lower_c(character *c) {
     switch (c1) {
         case 0x82:  // ァ - タ
             if (c2 >= 0xa1 && c2 <= 0xbf) {
-                *(c->cval +0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x80 & 0xff);
-                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x80 & 0xff);
+                *(c->cval + 2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
-        case 0x83:                           // ダ - ン
+        case 0x83:
             if (c2 >= 0x80 && c2 <= 0x9f) {  // ダ - ミ
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x81 & 0xff);
-                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x81 & 0xff);
+                *(c->cval + 2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0xa0 && c2 <= 0xb3) {  // ム - ン
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x82 & 0xff);
-                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x82 & 0xff);
+                *(c->cval + 2) = (char)((c2 - 0x20) & 0xff);
             } else if (c2 >= 0xbd && c2 <= 0xbe) {  // ヽヾ
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x82 & 0xff);
-                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x82 & 0xff);
+                *(c->cval + 2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
     }
@@ -1462,28 +1335,28 @@ void upper_c(character *c) {
     }
     uint8_t c0 = (uint8_t)c->val[0], c1 = (uint8_t)c->val[1],
             c2 = (uint8_t)c->val[2];
-            c->clen = 3;
+    c->clen = 3;
     switch (c1) {
         case 0x81:
             if (c2 >= 0x81 && c2 <= 0x9f) {  // ぁ - た
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x82 & 0xff);
-                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x82 & 0xff);
+                *(c->cval + 2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0xa0 && c2 <= 0xbf) {  // だ - み
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x83 & 0xff);
-                *(c->cval+2) = (char)((c2 - 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x83 & 0xff);
+                *(c->cval + 2) = (char)((c2 - 0x20) & 0xff);
             }
             break;
         case 0x82:
             if (c2 >= 0x80 && c2 <= 0x93) {  // む - ん
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x83 & 0xff);
-                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x83 & 0xff);
+                *(c->cval + 2) = (char)((c2 + 0x20) & 0xff);
             } else if (c2 >= 0x9d && c2 <= 0x9e) {  // ゝゞ
-                *(c->cval+0) = (char)(0xe3 & 0xff);
-                *(c->cval+1) = (char)(0x83 & 0xff);
-                *(c->cval+2) = (char)((c2 + 0x20) & 0xff);
+                *(c->cval + 0) = (char)(0xe3 & 0xff);
+                *(c->cval + 1) = (char)(0x83 & 0xff);
+                *(c->cval + 2) = (char)((c2 + 0x20) & 0xff);
             }
             break;
     }
@@ -1495,6 +1368,115 @@ void unknown(character *c) {
     }
     c->clen = c->len;
     *(c->cval + c->clen) = 0x00;
+}
+
+void extract(character *c, char *s, int len) {
+    c->len = 1;
+    if (is_1byte(s, len)) {
+        uint8_t c0 = *s & 0xff;
+        if (c0 == 0x20) {  // Space
+            c->conv = CNV_UPPER_S;
+        } else if (c0 >= 0x30 && c0 <= 0x39) {  // 0 - 9
+            c->conv = CNV_UPPER_A | CNV_UPPER_N;
+        } else if (c0 >= 0x41 && c0 <= 0x5a) {  // A - Z
+            c->conv = CNV_UPPER_A | CNV_UPPER_R;
+        } else if (c0 >= 0x61 && c0 <= 0x7a) {  // a - z
+            c->conv = CNV_UPPER_A | CNV_UPPER_R;
+        } else if (c0 >= 0x21 && c0 <= 0x7d && c0 != 0x22 && c0 != 0x27 &&
+                   c0 != 0x5c) {
+            c->conv = CNV_UPPER_A;
+        }
+    } else if (is_2bytes(s, len)) {
+        c->len = 2;
+    } else if (is_3bytes(s, len)) {
+        uint8_t c0 = *s & 0xff, c1 = *(s + 1) & 0xff, c2 = *(s + 2) & 0xff;
+        c->len = 3;
+        if (c0 == 0xef) {
+            if (c1 == 0xbc) {
+                if (c2 >= 0x90 && c2 <= 0x99) {  // ０ - ９
+                    c->conv = CNV_LOWER_A | CNV_LOWER_N;
+                } else if (c2 >= 0xa1 && c2 <= 0xba) {  // Ａ - Ｚ
+                    c->conv = CNV_LOWER_A | CNV_LOWER_R;
+                } else if (c2 != 0x82 && c2 != 0x87 &&
+                           c2 != 0xbc) {  // except ＂ ＇ ＼
+                    c->conv = CNV_LOWER_A;
+                }
+            } else if (c1 == 0xbd) {
+                if (c2 >= 0x81 && c2 <= 0x9a) {  // ａ - ｚ
+                    c->conv = CNV_LOWER_A | CNV_LOWER_R;
+                } else if (c2 >= 0x80 && c2 <= 0x9d) {  // ｀ - ｝
+                    c->conv = CNV_LOWER_A;
+                } else if (c2 >= 0xa1 && c2 <= 0xbf) {  // ｡ ｢ ｣ ､ ･ ｦ - ｿ
+                    if (is_voiced(s, len)) {            // voiced
+                        c->len = 6;
+                        if (c2 == 0xb3) {
+                            c->conv = CNV_UPPER_K;
+                        } else {
+                            c->conv = CNV_UPPER_H | CNV_UPPER_K;
+                        }
+                    } else {
+                        c->conv = CNV_UPPER_H | CNV_UPPER_K;
+                    }
+                }
+            } else if (c1 == 0xbe) {
+                if (c2 >= 0x80 && c2 <= 0x84) {  // ﾀ - ﾄ
+                    if (is_voiced(s, len)) {
+                        c->len = 6;
+                    }
+                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
+                } else if (c2 >= 0x8a && c2 <= 0x8e) {  // ﾊ - ﾎ
+                    if (is_voiced(s, len) ||
+                        is_semi_voiced(s, len)) {  // voiced or semi voiced
+                        c->len = 6;
+                    }
+                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
+                } else if (c2 >= 0x85 && c2 <= 0x9f) {  // ﾅ - ﾝﾞﾟ
+                    c->conv = CNV_UPPER_H | CNV_UPPER_K;
+                }
+            }
+        } else if (c0 == 0xe3) {
+            if (c1 == 0x80) {
+                if (c2 == 0x80) {  // Space
+                    c->conv = CNV_LOWER_S;
+                } else if (c2 >= 0x81 && c2 <= 0x82) {  // 、。
+                    c->conv = CNV_LOWER_H | CNV_LOWER_K;
+                }
+            } else if (c1 == 0x81) {
+                if (c2 >= 0x81 && c2 <= 0xbf) {  // ぁ - み
+                    c->conv = CNV_LOWER_C | CNV_UPPER_C | CNV_LOWER_H;
+                }
+            } else if (c2 == 0x82) {
+                if (c2 >= 0x80 && c2 <= 0x93) {  // む - ん
+                    c->conv = CNV_LOWER_C | CNV_UPPER_C | CNV_LOWER_H;
+                } else if (c2 >= 0x9b && c2 <= 0x9c) {  // ゛゜
+                    c->conv = CNV_LOWER_H | CNV_LOWER_K;
+                } else if (c2 >= 0x9d && c2 <= 0x9e) {  // ゝゞ
+                    c->conv = CNV_UPPER_C;
+                } else if (c2 >= 0xa1 && c2 <= 0xbf) {  // ァ - タ
+                    c->conv = CNV_LOWER_C | CNV_LOWER_K;
+                }
+            } else if (c1 == 0x83) {
+                if (c2 >= 0x80 && c2 <= 0xb3) {  // チ - ン
+                    c->conv = CNV_LOWER_C | CNV_LOWER_K;
+                } else if (c2 == 0xb4) {  // ヴ
+                    c->conv = CNV_LOWER_K;
+                } else if (c2 >= 0xbb && c2 <= 0xbc) {  // ・ー
+                    c->conv = CNV_LOWER_H | CNV_LOWER_K;
+                } else if (c2 >= 0xbd && c2 <= 0xbe) {  // ヽ ヾ
+                    c->conv = CNV_LOWER_C;
+                }
+            }
+        }
+    } else if (is_4bytes(s, len)) {
+        c->len = 4;
+    } else {
+        c->len = 1;
+    }
+
+    for (int i = 0; i < c->len; i++) {
+        *(c->val + i) = *(s + i) & 0xff;
+    }
+    *(c->val + c->len) = 0x00;
 }
 
 void conv(character *c, char *mode) {
@@ -1548,57 +1530,43 @@ void conv(character *c, char *mode) {
             break;
         }
         i++;
-    };
-    if (c->clen==0) {
+    }
+    if (c->clen == 0) {
         unknown(c);
     }
 }
 
 char *create_mode(char *mode_str, int mode_len) {
-    char *mode;
-    char *tmp = (char *)calloc(1, 16);
-    if (tmp == NULL) {
+    char *mode = (char *)calloc(1, 16);
+    if (mode == NULL) {
         return NULL;
     }
-    mode = tmp;
 
     char m;
     bool flg;
     int k = 0;
     for (int i = 0; i < mode_len; i++) {
-        m = mode_str[i];
+        m = *(mode_str + i);
         flg = false;
-        switch (m) {
-            case 'r':
-            case 'R':
-            case 'n':
-            case 'N':
-            case 'a':
-            case 'A':
-            case 's':
-            case 'S':
-            case 'k':
-            case 'K':
-            case 'h':
-            case 'H':
-            case 'c':
-            case 'C':
-                for (int j = 0; j < 16; j++) {
-                    if (*(mode + j) == m) {
-                        flg = false;
-                        break;
-                    }
-                    flg = true;
+        if (m == 'r' || m == 'R' || m == 'n' || m == 'N' || m == 'a' ||
+            m == 'A' || m == 's' || m == 'S' || m == 'k' || m == 'K' ||
+            m == 'h' || m == 'H' || m == 'c' || m == 'C') {
+            for (int j = 0; j < 16; j++) {
+                if (*(mode + j) == m) {
+                    flg = false;
+                    break;
                 }
-                break;
+                flg = true;
+            }
+            break;
+            if (flg) {
+                *(mode + k) = m;
+                k++;
+            }
         }
-        if (flg) {
-            *(mode + k) = m;
-            k++;
-        }
-    }
 
-    return mode;
+        return mode;
+    }
 }
 
 void init_character(character *c) {
@@ -1610,7 +1578,6 @@ void init_character(character *c) {
 }
 
 char *convert(char *str, int str_len, char *mode_str, int mode_len) {
-
     char *mode = create_mode(mode_str, mode_len);
 
     // Allocate for return value

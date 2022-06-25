@@ -2,7 +2,6 @@ CC=gcc
 AR=ar
 RM=rm
 
-
 all: clean build
 
 build:
@@ -11,4 +10,3 @@ build:
 
 clean:
 	$(RM) -f *.a *.o
-
