@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CNV_UNKNOWN 0
+#define CNV_ASIS 0
 #define CNV_LOWER_R 1
 #define CNV_UPPER_R 2
 #define CNV_LOWER_N 4
@@ -15,17 +15,17 @@
 #define CNV_UPPER_S 128
 #define CNV_LOWER_K 256
 #define CNV_UPPER_K 512
-#define CNV_LOWER_H 1028
+#define CNV_LOWER_H 1024
 #define CNV_UPPER_H 2048
 #define CNV_LOWER_C 4096
 #define CNV_UPPER_C 8192
 
 typedef struct _character {
-    uint8_t val[8];
-    uint8_t len;
-    uint16_t conv;  // CNV_LOWER_* or CNV_UPPER_*
-    char cval[8];   // converted value
-    uint8_t clen;   // converted value length;
+  uint8_t val[8];
+  uint8_t len;
+  uint16_t conv;  // CNV_LOWER_* or CNV_UPPER_*
+  char cval[8];   // converted value
+  uint8_t clen;   // converted value length;
 } character;
 
 typedef void (*filter)(character*);
@@ -51,11 +51,11 @@ void lower_h(character*);
 void upper_h(character*);
 void lower_c(character*);
 void upper_c(character*);
-void unknown(character*);
+void asis(character*);
 
-char* create_mode(char*, int);
+filter* create_filters(char*, int);
 void init_character(character*);
-void conv(character*, char*);
+void conv(character*, filter*);
 void extract(character* c, char* s, int len);
 
 extern char* convert(char*, int, char*, int);
