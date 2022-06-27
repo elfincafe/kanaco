@@ -9,7 +9,7 @@
 #define MODE_BUF 16
 #define RET_BUF 4096
 
-bool is_1byte(char *s, int len) {
+bool is_1byte(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_1byte");
 #endif
@@ -21,7 +21,7 @@ bool is_1byte(char *s, int len) {
   return false;
 }
 
-bool is_2bytes(char *s, int len) {
+bool is_2bytes(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_2bytes");
 #endif
@@ -33,7 +33,7 @@ bool is_2bytes(char *s, int len) {
   return false;
 }
 
-bool is_3bytes(char *s, int len) {
+bool is_3bytes(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_3bytes");
 #endif
@@ -45,7 +45,7 @@ bool is_3bytes(char *s, int len) {
   return false;
 }
 
-bool is_4bytes(char *s, int len) {
+bool is_4bytes(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_4bytes");
 #endif
@@ -58,7 +58,7 @@ bool is_4bytes(char *s, int len) {
   return false;
 }
 
-bool is_voiced(char *s, int len) {
+bool is_voiced(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_voiced");
 #endif
@@ -80,7 +80,7 @@ bool is_voiced(char *s, int len) {
   return false;
 }
 
-bool is_semi_voiced(char *s, int len) {
+bool is_semi_voiced(const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "is_semi_voiced");
 #endif
@@ -1469,7 +1469,7 @@ void asis(character *c) {
   *(c->cval + c->clen) = 0x00;
 }
 
-void extract(character *c, char *s, int len) {
+void extract(character *c, const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "extract");
 #endif
@@ -1600,7 +1600,7 @@ void conv(character *c, filter *filters) {
   }
 }
 
-filter *create_filters(char *mode_str, int mode_len) {
+filter *create_filters(const char *mode_str, int mode_len) {
 #ifdef DEBUG
   printf("Func: %s\n", "create_filters");
 #endif
@@ -1702,7 +1702,8 @@ void init_character(character *c) {
   c->clen = 0;
 }
 
-char *convert(char *str, int str_len, char *mode_str, int mode_len) {
+char *convert(const char *str, int str_len, const char *mode_str,
+              int mode_len) {
 #ifdef DEBUG
   printf("Func: %s\n", "convert");
 #endif
@@ -1746,4 +1747,10 @@ char *convert(char *str, int str_len, char *mode_str, int mode_len) {
   }
 
   return ret;
+}
+
+void freeMemory(void *m) {
+  if (m != NULL) {
+    free(m);
+  }
 }
