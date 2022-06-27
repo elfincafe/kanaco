@@ -30,12 +30,12 @@ typedef struct _character {
 
 typedef void (*filter)(character*);
 
-bool is_1byte(char*, int);
-bool is_2byte(char*, int);
-bool is_3byte(char*, int);
-bool is_4byte(char*, int);
-bool is_voiced(char*, int);
-bool is_semi_voiced(char*, int);
+bool is_1byte(const char*, int);
+bool is_2byte(const char*, int);
+bool is_3byte(const char*, int);
+bool is_4byte(const char*, int);
+bool is_voiced(const char*, int);
+bool is_semi_voiced(const char*, int);
 
 void lower_r(character*);
 void upper_r(character*);
@@ -53,11 +53,12 @@ void lower_c(character*);
 void upper_c(character*);
 void asis(character*);
 
-filter* create_filters(char*, int);
+filter* create_filters(const char*, int);
 void init_character(character*);
 void conv(character*, filter*);
-void extract(character* c, char* s, int len);
+void extract(character* c, const char* s, int len);
 
-extern char* convert(char*, int, char*, int);
+extern char* convert(const char*, int, const char*, int);
+extern void freeMemory(void*);
 
 #endif

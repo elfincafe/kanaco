@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"unsafe"
 )
 
 type Reader struct {
@@ -27,6 +28,7 @@ func String(s, mod string) string {
 	mode := C.CString(mod)
 	mode_len := C.int(len(mod))
 	ret := C.convert(str, str_len, mode, mode_len)
+	defer C.freeMemory(unsafe.Pointer(ret))
 	return C.GoString(ret)
 }
 
