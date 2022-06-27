@@ -55,42 +55,42 @@ func mode4Test(path string) string {
 	return mode.String()
 }
 
-// func TestByte(t *testing.T) {
-// 	content, err := ioutil.ReadFile("./data/input.txt")
-// 	if err != nil {
-// 		t.Errorf(err.Error())
-// 	}
-// 	paths, err := filepath.Glob("./data/" + output)
-// 	if err != nil {
-// 		t.Errorf(err.Error())
-// 	}
-// 	for _, path := range paths {
-// 		mode := mode4Test(path)
-// 		expect, err := ioutil.ReadFile(path)
-// 		if err != nil {
-// 			t.Errorf(err.Error())
-// 		}
-// 		result := Byte(content, mode)
-// 		if strings.Compare(string(result), string(expect)) != 0 {
-// 			expects := bytes.Split(expect, []byte("\n"))
-// 			results := bytes.Split(result, []byte("\n"))
-// 			msg := strings.Builder{}
-// 			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
-// 			for k, e := range expects {
-// 				r := results[k]
-// 				fmt.Printf("[%d] %s(%T) <-> %s\n", k, e, e, results[k])
-// 				if strings.Compare(string(r), string(e)) != 0 {
-// 					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
-// 					msg.Write(e)
-// 					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
-// 					msg.Write(r)
-// 					msg.WriteString("\n")
-// 				}
-// 			}
-// 			t.Errorf(msg.String())
-// 		}
-// 	}
-// }
+func TestByte(t *testing.T) {
+	content, err := ioutil.ReadFile("./data/input.txt")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	paths, err := filepath.Glob("./data/" + output)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	for _, path := range paths {
+		mode := mode4Test(path)
+		expect, err := ioutil.ReadFile(path)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		result := Byte(content, mode)
+		if strings.Compare(string(result), string(expect)) != 0 {
+			expects := bytes.Split(expect, []byte("\n"))
+			results := bytes.Split(result, []byte("\n"))
+			msg := strings.Builder{}
+			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
+			for k, e := range expects {
+				r := results[k]
+				fmt.Printf("[%d] %s(%T) <-> %s\n", k, e, e, results[k])
+				if strings.Compare(string(r), string(e)) != 0 {
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.Write(e)
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.Write(r)
+					msg.WriteString("\n")
+				}
+			}
+			t.Errorf(msg.String())
+		}
+	}
+}
 
 func TestString(t *testing.T) {
 	content, err := ioutil.ReadFile("./data/input.txt")
@@ -117,9 +117,9 @@ func TestString(t *testing.T) {
 			for k, e := range expects {
 				r := results[k]
 				if strings.Compare(string(r), string(e)) != 0 {
-					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
+					msg.WriteString(fmt.Sprintf("Expect(%d): ", k+1))
 					msg.Write(e)
-					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k))
+					msg.WriteString(fmt.Sprintf("\nResult(%d): ", k+1))
 					msg.WriteString(r)
 					msg.WriteString("\n")
 				}
