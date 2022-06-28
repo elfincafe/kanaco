@@ -2,7 +2,7 @@ package kanaco
 
 /*
 #cgo CFLAGS: -I./c
-#cgo LDFLAGS: -L./c -lkanaco
+#cgo LDFLAGS: -L.build -lkanaco
 #include "kanaco.h"
 */
 import "C"
