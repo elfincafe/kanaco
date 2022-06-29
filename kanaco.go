@@ -3,6 +3,7 @@ package kanaco
 /*
 #cgo CFLAGS: -I./c
 #cgo LDFLAGS: -L.build -lkanaco
+#include <stdlib.h>
 #include "kanaco.h"
 */
 import "C"
@@ -28,7 +29,8 @@ func String(s, mod string) string {
 	mode := C.CString(mod)
 	mode_len := C.int(len(mod))
 	ret := C.convert(str, str_len, mode, mode_len)
-	defer C.freeMemory(unsafe.Pointer(ret))
+	// defer C.freeMemory(unsafe.Pointer(ret))
+	defer C.free(unsafe.Pointer(ret))
 	return C.GoString(ret)
 }
 
