@@ -4,7 +4,7 @@ LABEL version="0.1.0"
 LABEL description="KanaCo Kana Converter Library"
 LABEL maintainer="Takamichi Seki <takamichi.seki@elfincafe.com>"
 
-RUN apk update && apk upgrade && apk add doas vim tzdata gcc make musl-dev go go-doc cython cython-doc python3 python3-doc
+RUN apk update && apk upgrade && apk add doas vim tzdata gcc make musl-dev go go-doc cython cython-doc python3 python3-doc py3-pytest
 RUN cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 RUN apk del tzdata
 RUN rm -f /var/cache/apk/*
