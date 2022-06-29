@@ -1748,9 +1748,3 @@ char *convert(const char *str, int str_len, const char *mode_str,
 
   return ret;
 }
-
-void freeMemory(void *m) {
-  if (m != NULL) {
-    free(m);
-  }
-}

@@ -59,6 +59,5 @@ void conv(character*, filter*);
 void extract(character* c, const char* s, int len);
 
 extern char* convert(const char*, int, const char*, int);
-extern void freeMemory(void*);
 
 #endif
