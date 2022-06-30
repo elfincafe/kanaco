@@ -1715,36 +1715,36 @@ char *convert(const char *str, int str_len, const char *mode_str,
   filter *filters = create_filters(mode_str, mode_len);
 
   // Allocate for return value
-  int ret_len = RET_BUF;
-  char *ret = (char *)malloc(ret_len);
-  if (ret == NULL) {
+  int buf_len = RET_BUF;
+  char *buf = (char *)malloc(buf_len);
+  if (buf == NULL) {
     return NULL;
   }
 
   character c;
-  int offset = 0, offset_ret = 0, total_len = 0;
+  int offset = 0, offset_buf = 0, total_len = 0;
   while (str_len > 0) {
     init_character(&c);
     extract(&c, str + offset, str_len);
     conv(&c, filters);
     total_len += c.clen;
-    if (ret_len - total_len < 32) {
-      char *tmp = (char *)realloc(ret, ret_len + RET_BUF);
+    if (buf_len - total_len < 32) {
+      char *tmp = (char *)realloc(buf, buf_len + RET_BUF);
       if (tmp == NULL) {
         return NULL;
       }
-      ret = tmp;
-      ret_len += RET_BUF;
+      buf = tmp;
+      buf_len += RET_BUF;
     }
-    strncpy(ret + offset_ret, c.cval, c.clen);
+    strncpy(buf + offset_buf, c.cval, c.clen);
     offset += c.len;
     str_len -= c.len;
-    offset_ret += c.clen;
+    offset_buf += c.clen;
   }
-  *(ret + offset_ret) = 0x00;
+  *(buf + offset_buf) = 0x00;
   if (filters != NULL) {
     free(filters);
   }
 
-  return ret;
+  return buf;
 }
