@@ -1,8 +1,7 @@
 package kanaco
 
 /*
-#cgo CFLAGS: -I./c
-#cgo LDFLAGS: -L.build -lkanaco
+#cgo CFLAGS: -I.
 #include <stdlib.h>
 #include "kanaco.h"
 */
@@ -19,17 +18,16 @@ type Reader struct {
 	mode string
 }
 
-func Byte(b []byte, mode string) []byte {
-	return []byte(String(string(b), mode))
+func Byte(bytes []byte, mode string) []byte {
+	return []byte(String(string(bytes), mode))
 }
 
-func String(s, mod string) string {
-	str := C.CString(s)
-	str_len := C.int(len(s))
-	mode := C.CString(mod)
-	mode_len := C.int(len(mod))
-	ret := C.convert(str, str_len, mode, mode_len)
-	// defer C.freeMemory(unsafe.Pointer(ret))
+func String(str, mode string) string {
+	s := C.CString(str)
+	slen := C.int(len(str))
+	m := C.CString(mode)
+	mlen := C.int(len(mode))
+	ret := C.convert(s, slen, m, mlen)
 	defer C.free(unsafe.Pointer(ret))
 	return C.GoString(ret)
 }
