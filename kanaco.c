@@ -1197,7 +1197,7 @@ void upper_h(character *c) {
         strncpy(c->cval, "い", c->clen);
         break;
       case 0xb3:
-        if (is_voiced(c->val, c->len)) {
+        if (is_voiced(c->cval, c->clen)) {
           c->clen = 6;
           strncpy(c->cval, "う゛", c->clen);
         } else {
