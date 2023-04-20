@@ -23,8 +23,15 @@ cbuild:
 	$(CC) -c kanaco.c -o $(WORKDIR)/kanaco.c.o -fPIC -I.
 	$(CC) $(WORKDIR)/kanaco.c.o -o $(WORKDIR)/libkanaco.so -shared
 
+ctest:
+	$(MKDIR) -p $(WORKDIR)
+	$(CC) -o $(WORKDIR)/kanaco kanaco.c kanaco_test.c && $(WORKDIR)/kanaco
+
+
 gotest: cbuild
 	$(GOTEST) -v
+
+gobuild:
 
 pybuild: cbuild
 	$(RM) -f $(WORKDIR)/libkanaco.so
@@ -32,7 +39,7 @@ pybuild: cbuild
 	$(CC) -o $(WORKDIR)/kanaco.py.o -c $(WORKDIR)/kanaco.py.c -fPIC -I. $$($(PYCONFIG) --cflags)
 	$(CC) $(WORKDIR)/kanaco.py.o -o $(WORKDIR)/kanaco.so -shared $$($(PYCONFIG) --ldflags) -L$(WORKDIR) -lkanaco
 
-pyinstall:
+pytest:
 
 
 clean:
