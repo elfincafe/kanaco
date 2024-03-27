@@ -1,5 +1,6 @@
-CC=gcc
+CC=clang
 AR=ar
+PKGCONFIG=pkg-config
 GO=go
 GOBUILD=go build
 GOTEST=go test
@@ -10,28 +11,29 @@ PYLDFLAGS=python3-config --ldflags
 MAKE=make
 MKDIR=mkdir
 RM=rm
-INCLUDE=-I./c
-WORKDIR=.build
+INCLUDE="-I. -I/usr/include"
+WORKDIR=/tmp/.kanaco
+STATICDIR=$(WORKDIR)/static
+SHAREDDIR=$(WORKDIR)/shared
+UTFLAGS=$$($(PKGCONFIG) --cflags --libs cunit)
 
 
 all: clean cbuild pybuild
 
 cbuild:
-	$(MKDIR) -p $(WORKDIR)
-	$(CC) -c kanaco.c -o $(WORKDIR)/kanaco.c.o -fPIC -I.
-	$(AR) rsv $(WORKDIR)/libkanaco.a $(WORKDIR)/kanaco.c.o
-	$(CC) -c kanaco.c -o $(WORKDIR)/kanaco.c.o -fPIC -I.
-	$(CC) $(WORKDIR)/kanaco.c.o -o $(WORKDIR)/libkanaco.so -shared
+	$(MKDIR) -p $(STATICDIR) $(SHAREDDIR)
+	$(CC) -c kanaco.c -o $(STATICDIR)/kanaco.c.o -Wall
+	$(AR) rsv $(STATICDIR)/libkanaco.a $(STATICDIR)/kanaco.c.o
+	$(CC) -c kanaco.c -o $(SHAREDDIR)/libkanaco.so -fPIC -Wall
 
-ctest:
-	$(MKDIR) -p $(WORKDIR)
-	$(CC) -o $(WORKDIR)/kanaco kanaco.c kanaco_test.c && $(WORKDIR)/kanaco
-
+ctest: cbuild
+	$(CC) -o $(STATICDIR)/kanaco_test -I. -L$(STATICDIR) kanaco_test.c -lkanaco $$($(PKGCONFIG) --cflags --libs cunit) && $(STATICDIR)/kanaco_test
+	$(CC) -o $(SHAREDDIR)/kanaco_test -I. -L$(SHAREDDIR) kanaco_test.c -lkanaco $$($(PKGCONFIG) --cflags --libs cunit) && $(SHAREDDIR)/kanaco_test
 
 gotest: cbuild
 	$(GOTEST) -v
 
-gobuild:
+gobuild: cbuild
 
 pybuild: cbuild
 	$(RM) -f $(WORKDIR)/libkanaco.so
@@ -43,5 +45,4 @@ pytest:
 
 
 clean:
-	$(RM) -rf .build core
-
+	$(RM) -rf $(WORKDIR)

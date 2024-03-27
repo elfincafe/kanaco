@@ -1383,8 +1383,7 @@ void lower_c(character *c) {
     return;
   }
 
-  uint8_t c0 = (uint8_t)c->val[0], c1 = (uint8_t)c->val[1],
-          c2 = (uint8_t)c->val[2];
+  uint8_t c1 = (uint8_t)c->val[1], c2 = (uint8_t)c->val[2];
   c->clen = 3;
   switch (c1) {
     case 0x82:  // ァ - タ
@@ -1424,8 +1423,7 @@ void upper_c(character *c) {
   if (!(c->conv & CNV_UPPER_C)) {
     return;
   }
-  uint8_t c0 = (uint8_t)c->val[0], c1 = (uint8_t)c->val[1],
-          c2 = (uint8_t)c->val[2];
+  uint8_t c1 = (uint8_t)c->val[1], c2 = (uint8_t)c->val[2];
   c->clen = 3;
   switch (c1) {
     case 0x81:
@@ -1473,17 +1471,16 @@ void extract(character *c, const char *s, int len) {
 #ifdef DEBUG
   printf("Func: %s\n", "extract");
 #endif
-  bool flg = false;
   c->len = 1;
   if (is_1byte(s, len)) {
     uint8_t c0 = *s & 0xff;
-    if (c0 == 0x20) {  // Space
+    if (c0 == 0x20) { // Space
       c->conv = CNV_UPPER_S;
-    } else if (c0 >= 0x30 && c0 <= 0x39) {  // 0 - 9
+    } else if (c0 >= 0x30 && c0 <= 0x39) { // 0 - 9
       c->conv = CNV_UPPER_A | CNV_UPPER_N;
-    } else if (c0 >= 0x41 && c0 <= 0x5a) {  // A - Z
+    } else if (c0 >= 0x41 && c0 <= 0x5a) { // A - Z
       c->conv = CNV_UPPER_A | CNV_UPPER_R;
-    } else if (c0 >= 0x61 && c0 <= 0x7a) {  // a - z
+    } else if (c0 >= 0x61 && c0 <= 0x7a) { // a - z
       c->conv = CNV_UPPER_A | CNV_UPPER_R;
     } else if (c0 >= 0x21 && c0 <= 0x7d && c0 != 0x22 && c0 != 0x27 &&
                c0 != 0x5c) {
@@ -1495,7 +1492,6 @@ void extract(character *c, const char *s, int len) {
     if (c0 == 0xef) {
       if (c1 == 0xbc) {
         if (c2 >= 0x90 && c2 <= 0x99) {  // ０ - ９
-          flg = true;
           c->conv = CNV_LOWER_A | CNV_LOWER_N;
         } else if (c2 >= 0xa1 && c2 <= 0xba) {  // Ａ - Ｚ
           c->conv = CNV_LOWER_A | CNV_LOWER_R;

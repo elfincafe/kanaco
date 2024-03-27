@@ -31,9 +31,9 @@ typedef struct _character {
 typedef void (*filter)(character*);
 
 bool is_1byte(const char*, int);
-bool is_2byte(const char*, int);
-bool is_3byte(const char*, int);
-bool is_4byte(const char*, int);
+bool is_2bytes(const char*, int);
+bool is_3bytes(const char*, int);
+bool is_4bytes(const char*, int);
 bool is_voiced(const char*, int);
 bool is_semi_voiced(const char*, int);
 
