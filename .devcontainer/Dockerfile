@@ -1,8 +1,4 @@
-FROM docker.io/library/alpine:3.19.1
-
-LABEL version="0.1.0"
-LABEL description="KanaCo Kana Converter Library"
-LABEL maintainer="Takamichi Seki <takamichi.seki@elfincafe.com>"
+FROM docker.io/library/alpine:3.21.2
 
 ENV GOPATH /usr/local/kanaco
 ENV PATH ${GOPATH}/bin:${PATH}
@@ -13,7 +9,7 @@ RUN apk update && \
     apk add doas \
             vim \
             tzdata \
-            gcc \
+            clang \
             make \
             musl-dev \
             go \
@@ -22,11 +18,11 @@ RUN apk update && \
             py3-pytest \
             cunit-dev && \
     rm -f /var/cache/apk/* && \
-    adduser -u 2000 -D -h /home/zlkv -G users zlkv && \
-    addgroup zlkv wheel && \
-    echo -e "permit nopass :root\npermit nopass :wheel" > /etc/doas.d/doas.conf && \
+    adduser -u 2000 -D -h /home/dev -G users dev && \
+    addgroup dev wheel && \
+    echo -e "permit nopass :root\npermit nopass :wheel" > /etc/doas.conf && \
     mkdir -p ${GOPATH}/pkg ${GOPATH}/bin ${GOPATH}/src && \
-    chown -R zlkv:users ${GOPATH}
+    chown -R dev:users ${GOPATH}
 
-USER zlkv
-WORKDIR $GOPATH/src
+USER dev
+WORKDIR ${GOPATH}/src

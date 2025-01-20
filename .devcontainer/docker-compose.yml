@@ -10,9 +10,7 @@ services:
     networks:
       - kanaco
     volumes:
-      - type: bind
-        source: ..
-        target: /usr/local/kanaco/src
+      - ..:/usr/local/kanaco/src
     environment:
       - TZ=Asia/Tokyo
       - EDITOR=vi
