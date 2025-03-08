@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +55,7 @@ func mode4Test(path string) string {
 }
 
 func TestByte(t *testing.T) {
-	content, err := ioutil.ReadFile("./data/input.txt")
+	content, err := os.ReadFile("./data/input.txt")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -66,7 +65,7 @@ func TestByte(t *testing.T) {
 	}
 	for _, path := range paths {
 		mode := mode4Test(path)
-		expect, err := ioutil.ReadFile(path)
+		expect, err := os.ReadFile(path)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -93,7 +92,7 @@ func TestByte(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	content, err := ioutil.ReadFile("./data/input.txt")
+	content, err := os.ReadFile("./data/input.txt")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -103,7 +102,7 @@ func TestString(t *testing.T) {
 	}
 	for _, path := range paths {
 		mode := mode4Test(path)
-		expect, err := ioutil.ReadFile(path)
+		expect, err := os.ReadFile(path)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -141,7 +140,7 @@ func TestNewReader(t *testing.T) {
 func TestRead(t *testing.T) {
 	paths, _ := filepath.Glob("./data/" + output)
 	for _, path := range paths {
-		expects, _ := ioutil.ReadFile(path)
+		expects, _ := os.ReadFile(path)
 		mode := mode4Test(path)
 		f, _ := os.Open("./data/input.txt")
 		r := NewReader(f, mode)

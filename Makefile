@@ -4,7 +4,7 @@ PKGCONFIG=pkg-config
 GO=go
 GOBUILD=go build
 GOTEST=go test
-CYTHON=cython
+CYTHON=cython3
 PYCONFIG=python3-config
 PYCFLAGS=python3-config --cflags
 PYLDFLAGS=python3-config --ldflags
@@ -12,9 +12,9 @@ MAKE=make
 MKDIR=mkdir
 RM=rm
 INCLUDE="-I. -I/usr/include"
-WORKDIR=/tmp/.kanaco
-STATICDIR=$(WORKDIR)/static
-SHAREDDIR=$(WORKDIR)/shared
+WORKDIR=.c
+STATICDIR=$(WORKDIR)
+SHAREDDIR=$(WORKDIR)
 UTFLAGS=$$($(PKGCONFIG) --cflags --libs cunit)
 
 
