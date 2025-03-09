@@ -20,7 +20,36 @@ func mode4Test(path string) string {
 	tmp := strings.Split(strings.ReplaceAll(strings.ReplaceAll(basename, "output.", ""), ext, ""), ".")
 	mode := strings.Builder{}
 	for _, m := range tmp {
-		mode.WriteString(m)
+		switch m {
+		case "la":
+			mode.WriteString("a")
+		case "lc":
+			mode.WriteString("c")
+		case "lh":
+			mode.WriteString("h")
+		case "lk":
+			mode.WriteString("k")
+		case "ln":
+			mode.WriteString("n")
+		case "lr":
+			mode.WriteString("r")
+		case "ls":
+			mode.WriteString("s")
+		case "ua":
+			mode.WriteString("A")
+		case "uc":
+			mode.WriteString("C")
+		case "uh":
+			mode.WriteString("H")
+		case "uk":
+			mode.WriteString("K")
+		case "un":
+			mode.WriteString("N")
+		case "ur":
+			mode.WriteString("R")
+		case "us":
+			mode.WriteString("S")
+		}
 	}
 	return mode.String()
 }
