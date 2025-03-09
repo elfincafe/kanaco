@@ -44,9 +44,7 @@ func Byte(b []byte, mode string) []byte {
 	}
 	filters := createFilters(mode)
 
-	// Allocate for return value
 	buf := make([]byte, 0, 512)
-
 	c := new(character)
 	length := len(b)
 	for i := 0; i < length; i++ {
@@ -54,7 +52,11 @@ func Byte(b []byte, mode string) []byte {
 		extract(c, b[i:])
 		conv(c, filters)
 		buf = append(buf, c.cval...)
-		i += len(c.cval) - 1
+		proseed := len(c.val) - 1
+		if proseed < 0 {
+			proseed = 0
+		}
+		i += proseed
 	}
 	return buf
 }
@@ -305,7 +307,7 @@ func lowerK(c *character) {
 			c.cval = []byte{0xef, 0xbe, cval2, 0xef, 0xbe, 0x9e}
 		// タ行(ッ): ッ -> ｯ
 		case 0x83:
-			c.cval = []byte{0xef, 0xbe, 0xaf}
+			c.cval = []byte{0xef, 0xbd, 0xaf}
 		// タ行(ツ,テ,ト): ツ -> ﾂ, テ -> ﾃ, ト -> ﾄ
 		case 0x84, 0x86, 0x88:
 			cval2 = 0x82 + (c.val[2]-0x84)/0x02
@@ -337,10 +339,10 @@ func lowerK(c *character) {
 		// ャ行: ャ -> ｬ, ュ -> ｭ, ョ -> ｮ
 		case 0xa3, 0xa5, 0xa7:
 			cval2 = 0xac + (c.val[2]-0xa3)/0x02
-			c.cval = []byte{0xef, 0xbe, cval2}
+			c.cval = []byte{0xef, 0xbd, cval2}
 		// ヤ行: ヤ -> ﾔ, ユ -> ﾕ, ヨ -> ﾖ
 		case 0xa4, 0xa6, 0xa8:
-			cval2 = 0xac + (c.val[2]-0xa4)/0x02
+			cval2 = 0x94 + (c.val[2]-0xa4)/0x02
 			c.cval = []byte{0xef, 0xbe, cval2}
 		// ラ行: ラ -> ﾗ, リ -> ﾘ, ル -> ﾙ, レ -> ﾚ, ロ -> ﾛ
 		case 0xa9, 0xaa, 0xab, 0xac, 0xad:
@@ -392,30 +394,30 @@ func upperK(c *character) {
 			c.cval = []byte{0xe3, 0x80, 0x81}
 		// ･ -> ・
 		case 0xa5:
-			c.cval = []byte{0xe3, 0x38, 0xbb}
+			c.cval = []byte{0xe3, 0x83, 0xbb}
 		// ｦ -> ヲ
 		case 0xa6:
 			c.cval = []byte{0xe3, 0x83, 0xb2}
 		// ｧ行: ｧ -> ァ, ｨ -> ィ, ｩ -> ゥ, ｪ -> ェ, ｫ -> ォ
 		case 0xa7, 0xa8, 0xa9, 0xaa, 0xab:
 			cval2 = 0xa1 + (c.val[2]-0xa7)*0x02
-			c.cval = []byte{0xef, 0xbd, cval2}
+			c.cval = []byte{0xe3, 0x82, cval2}
 		// ｬ行: ｬ -> ャ, ｭ -> ュ, ｮ -> ョ
 		case 0xac, 0xad, 0xae:
 			cval2 = 0xa3 + (c.val[2]-0xac)*0x02
-			c.cval = []byte{0xef, 0xbd, cval2}
+			c.cval = []byte{0xe3, 0x83, cval2}
 		// ｯ -> ッ
 		case 0xaf:
 			c.cval = []byte{0xe3, 0x83, 0x83}
 		// ｰ -> ー
 		case 0xb0:
 			c.cval = []byte{0xe3, 0x83, 0xbc}
-		// ｱ行: ｱ -> ア, ｲ -> イ, ｳ -> ウ, ｴ -> エ, ｵ -> オ
+		// ｱ行: ｱ -> ア, ｲ -> イ, ｴ -> エ, ｵ -> オ
 		case 0xb1, 0xb2, 0xb4, 0xb5:
-			cval2 = 0x02 + (c.val[2]-0xb1)*0x02
+			cval2 = 0xa2 + (c.val[2]-0xb1)*0x02
 			c.cval = []byte{0xe3, 0x82, cval2}
 		// ｱ行(ｳ,ｳﾞ): ｳ -> ウ, ｳﾞ -> ヴ
-		case 0x03:
+		case 0xb3:
 			if len(c.val) > 5 && c.val[5] == 0x9e {
 				c.cval = []byte{0xe3, 0x83, 0xb4}
 			} else {
@@ -457,12 +459,12 @@ func upperK(c *character) {
 				cval2 = 0x81
 			}
 			c.cval = []byte{0xe3, 0x83, cval2}
-		// タ行(テ,ト)・ダ行(デ,ド): ﾃ -> テ, ﾄ -> ト, ﾃﾞ -> デ, ﾄﾞ -> ド
+		// タ行(ツ,テ,ト)・ダ行(ヅ,デ,ド): ﾃ -> テ, ﾄ -> ト, ﾃﾞ -> デ, ﾄﾞ -> ド
 		case 0x82, 0x83, 0x84:
 			if len(c.val) > 5 && c.val[5] == 0x9e {
 				cval2 = 0x85 + (c.val[2]-0x82)*0x02
 			} else {
-				cval2 = 0x88 + (c.val[2]-0x82)*0x02
+				cval2 = 0x84 + (c.val[2]-0x82)*0x02
 			}
 			c.cval = []byte{0xe3, 0x83, cval2}
 		// ナ行: (ﾅ -> ナ, ﾆ -> ニ, ﾇ -> ヌ, ﾈ -> ネ, ﾉ -> ノ)
@@ -487,7 +489,7 @@ func upperK(c *character) {
 			c.cval = []byte{0xe3, 0x83, cval2}
 		// ヤ行: ﾔ -> ヤ, ﾕ -> ユ, ﾖ -> ヨ
 		case 0x94, 0x95, 0x96:
-			cval2 = 0xa4 + (c.val[2]-0xac)*0x02
+			cval2 = 0xa4 + (c.val[2]-0x94)*0x02
 			c.cval = []byte{0xe3, 0x83, cval2}
 		case 0x97, 0x98, 0x99, 0x9a, 0x9b:
 			cval2 = c.val[2] + 0x12
@@ -558,7 +560,7 @@ func lowerH(c *character) {
 			c.cval = []byte{0xef, 0xbe, cval2, 0xef, 0xbe, 0x9e}
 		// た行(っ): っ -> ｯ
 		case 0xa3:
-			c.cval = []byte{0xef, 0xbe, 0xaf}
+			c.cval = []byte{0xef, 0xbd, 0xaf}
 		// た行(つ,て,と): つ -> ﾂ, て -> ﾃ, と -> ﾄ
 		case 0xa4, 0xa6, 0xa8:
 			cval2 = 0x82 + (c.val[2]-0xa4)/0x02
@@ -569,7 +571,7 @@ func lowerH(c *character) {
 			c.cval = []byte{0xef, 0xbe, cval2, 0xef, 0xbe, 0x9e}
 		// な行: な -> ﾅ, に -> ﾆ, ぬ -> ﾇ, ね -> ﾈ, の -> ﾉ
 		case 0xaa, 0xab, 0xac, 0xad, 0xae:
-			cval2 = c.val[2] - 0x05
+			cval2 = c.val[2] - 0x25
 			c.cval = []byte{0xef, 0xbe, cval2}
 
 		// は行: は -> ﾊ, ひ -> ﾋ, ふ -> ﾌ, へ -> ﾍ, ほ -> ﾎ
@@ -588,18 +590,17 @@ func lowerH(c *character) {
 		case 0xbe, 0xbf:
 			cval2 = c.val[2] - 0x2f
 			c.cval = []byte{0xef, 0xbe, cval2}
-
 		}
 	} else if c.val[1] == 0x82 {
 		switch c.val[2] {
 		// ま行(む,め,も): む -> ﾑ, め -> ﾒ, も -> ﾓ
 		case 0x80, 0x81, 0x82:
-			cval2 = c.val[2] - 0x11
+			cval2 = c.val[2] + 0x11
 			c.cval = []byte{0xef, 0xbe, cval2}
 		// ゃ行: ゃ -> ｬ, ゅ -> ｭ, ょ -> ｮ
 		case 0x83, 0x85, 0x87:
 			cval2 = 0xac + (c.val[2]-0x83)/0x02
-			c.cval = []byte{0xef, 0xbe, cval2}
+			c.cval = []byte{0xef, 0xbd, cval2}
 		// や行: や -> ﾔ, ゆ -> ﾕ, よ -> ﾖ
 		case 0x84, 0x86, 0x88:
 			cval2 = 0x94 + (c.val[2]-0x84)/0x02
@@ -639,7 +640,6 @@ func lowerH(c *character) {
 		// ー -> ｰ
 		case 0xbc:
 			c.cval = []byte{0xef, 0xbd, 0xb0}
-
 		}
 	}
 }
@@ -653,48 +653,45 @@ func upperH(c *character) {
 		switch c.val[2] {
 		// ｡ -> 。
 		case 0xa1:
-			c.cval = []byte{0xef, 0xbd, 0xa1}
-			// ｢ -> 「, ｣ -> 」
+			c.cval = []byte{0xe3, 0x80, 0x82}
+		// ｢ -> 「, ｣ -> 」
 		case 0xa2, 0xa3:
 			cval2 = c.val[2] - 0x16
 			c.cval = []byte{0xe3, 0x80, cval2}
-			// ､ -> 、
+		// ､ -> 、
 		case 0xa4:
 			c.cval = []byte{0xe3, 0x80, 0x81}
 		// ･ -> ・
 		case 0xa5:
-			c.cval = []byte{0xe3, 0x83, 0xab}
+			c.cval = []byte{0xe3, 0x83, 0xbb}
 		// ｦ -> を
 		case 0xa6:
 			c.cval = []byte{0xe3, 0x82, 0x92}
-			// ｧ行: ｧ -> あ, ｨ -> い, ｩ -> う, ｪ -> え, ｫ -> お
+		// ｧ行: ｧ -> ぁ, ｨ -> ぃ, ｩ -> ぅ, ｪ -> ぇ, ｫ -> ぉ
 		case 0xa7, 0xa8, 0xa9, 0xaa, 0xab:
-			cval2 = 0x82 + (c.val[2]-0xa7)*0x02
+			cval2 = 0x81 + (c.val[2]-0xa7)*0x02
 			c.cval = []byte{0xe3, 0x81, cval2}
-			// ｬ行: ｬ -> ゃ, ｭ -> ゅ, ｮ -> ょ
+		// ｬ行: ｬ -> ゃ, ｭ -> ゅ, ｮ -> ょ
 		case 0xac, 0xad, 0xae:
-			cval2 = 0x83 + (c.val[2]-0xa7)*0x02
+			cval2 = 0x83 + (c.val[2]-0xac)*0x02
 			c.cval = []byte{0xe3, 0x82, cval2}
-			// ﾀ行(ｯ): ｯ -> っ
+		// ﾀ行(ｯ): ｯ -> っ
 		case 0xaf:
 			c.cval = []byte{0xe3, 0x81, 0xa3}
 		// ｰ -> ー
 		case 0xb0: /* ｰ */
 			c.cval = []byte{0xe3, 0x83, 0xbc}
-			// ｱ行: ｱ -> あ, ｲ -> い, ｳ -> う, ｴ -> え, ｵ -> お
+		// ｱ行: ｱ -> あ, ｲ -> い, ｳ -> う, ｴ -> え, ｵ -> お
 		case 0xb1, 0xb2, 0xb4, 0xb5:
 			cval2 = 0x82 + (c.val[2]-0xb1)*0x02
 			c.cval = []byte{0xe3, 0x81, cval2}
-			// ｱ行(ｳ,ｳﾞ): ｳ -> う, ｳﾞ -> ゔ
 		case 0xb3:
+			c.cval = []byte{0xe3, 0x81, 0x86}
 			if len(c.val) > 5 && c.val[5] == 0x9e {
-				c.cval = []byte{0xe3, 0x82, 0x94}
-			} else {
-				c.cval = []byte{0xe3, 0x81, 0x86}
+				c.cval = append(c.cval, []byte{0xe3, 0x82, 0x9b}...)
 			}
-			c.cval = []byte{0xe3, 0x81, cval2}
-			// ｶ行: ｶ -> か, ｷ -> き, ｸ -> く, ｹ -> け, ｺ -> こ
-			// ｶﾞ行: ｶﾞ -> が, ｷﾞ -> ぎ, ｸﾞ -> ぐ, ｹﾞ -> げ, ｺﾞ -> ご
+		// ｶ行: ｶ -> か, ｷ -> き, ｸ -> く, ｹ -> け, ｺ -> こ
+		// ｶﾞ行: ｶﾞ -> が, ｷﾞ -> ぎ, ｸﾞ -> ぐ, ｹﾞ -> げ, ｺﾞ -> ご
 		case 0xb6, 0xb7, 0xb8, 0xb9, 0xba:
 			if len(c.val) > 5 && c.val[5] == 0x9e {
 				cval2 = 0x8c + (c.val[2]-0xb6)*0x02
@@ -702,7 +699,6 @@ func upperH(c *character) {
 				cval2 = 0x8b + (c.val[2]-0xb6)*0x02
 			}
 			c.cval = []byte{0xe3, 0x81, cval2}
-
 		// ｻ行: ｻ -> さ, ｼ -> し, ｽ -> す, ｾ -> せ, ｿ -> そ
 		// ｻﾞ行: ｻﾞ -> ざ, ｼﾞ -> じ, ｽﾞ -> ず, ｾﾞ -> ぜ, ｿﾞ -> ぞ
 		case 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
@@ -733,9 +729,9 @@ func upperH(c *character) {
 				cval2 = 0xa4 + (c.val[2]-0x82)*0x02
 			}
 			c.cval = []byte{0xe3, 0x81, cval2}
-			// ﾅ行: ﾅ -> な, ﾆ -> に, ﾇ -> ぬ, ﾈ -> ね, ﾉ -> の
+		// ﾅ行: ﾅ -> な, ﾆ -> に, ﾇ -> ぬ, ﾈ -> ね, ﾉ -> の
 		case 0x85, 0x86, 0x87, 0x88, 0x89:
-			cval2 = c.val[2] - 0x25
+			cval2 = c.val[2] + 0x25
 			c.cval = []byte{0xe3, 0x81, cval2}
 			// ﾊ行: ﾊ -> は, ﾋ -> ひ, ﾌ -> ふ, ﾍ -> へ, ﾎ -> ほ
 			// ﾊﾞ行: ﾊﾞ -> ば, ﾋﾞ -> び, ﾌﾞ -> ぶ, ﾍﾞ -> べ, ﾎﾞ -> ぼ
@@ -749,28 +745,32 @@ func upperH(c *character) {
 				cval2 = 0xaf + (c.val[2]-0x8a)*0x03
 			}
 			c.cval = []byte{0xe3, 0x81, cval2}
-			// ﾏ行: ﾏ -> ま, ﾐ -> み, ﾑ -> む, ﾒ -> め, ﾓ -> も
-		case 0x8f, 0x90, 0x91, 0x92, 0x93:
+		// ﾏ行: ﾏ -> ま, ﾐ -> み
+		case 0x8f, 0x90:
 			cval2 = c.val[2] + 0x2f
 			c.cval = []byte{0xe3, 0x81, cval2}
-			// ﾔ行: ﾔ -> や, ﾕ -> ゆ, ﾖ -> よ
+		// ﾏ行: ﾑ -> む, ﾒ -> め, ﾓ -> も
+		case 0x91, 0x92, 0x93:
+			cval2 = c.val[2] - 0x11
+			c.cval = []byte{0xe3, 0x82, cval2}
+		// ﾔ行: ﾔ -> や, ﾕ -> ゆ, ﾖ -> よ
 		case 0x94, 0x95, 0x96:
 			cval2 = 0x84 + (c.val[2]-0x94)*0x02
-			c.cval = []byte{0xe3, 0x81, cval2}
-			// ﾗ行: ﾗ -> ら, ﾘ -> り, ﾙ -> る, ﾚ -> れ, ﾛ -> ろ
+			c.cval = []byte{0xe3, 0x82, cval2}
+		// ﾗ行: ﾗ -> ら, ﾘ -> り, ﾙ -> る, ﾚ -> れ, ﾛ -> ろ
 		case 0x97, 0x98, 0x99, 0x9a, 0x9b:
 			cval2 = c.val[2] - 0x0e
-			c.cval = []byte{0xe3, 0x81, cval2}
-			// ﾜ行: ﾜ -> わ
+			c.cval = []byte{0xe3, 0x82, cval2}
+		// ﾜ行: ﾜ -> わ
 		case 0x9c:
 			c.cval = []byte{0xe3, 0x82, 0x8f}
-			// ﾝ -> ん
+		// ﾝ -> ん
 		case 0x9d:
 			c.cval = []byte{0xe3, 0x82, 0x93}
-			// ﾞ -> ゛
+		// ﾞ -> ゛
 		case 0x9e:
 			c.cval = []byte{0xe3, 0x82, 0x9b}
-			// ﾟ -> ゜
+		// ﾟ -> ゜
 		case 0x9f:
 			c.cval = []byte{0xe3, 0x82, 0x9c}
 		}
@@ -918,6 +918,8 @@ func extract(c *character, s []byte) {
 		length = 2
 	} else if is4Bytes(s) {
 		length = 4
+	} else {
+		length = 1
 	}
 	c.val = s[:length]
 }
@@ -926,7 +928,7 @@ func conv(c *character, filters []filter) []byte {
 	for _, f := range filters {
 		f(c)
 	}
-	if len(c.val) == 0 {
+	if len(c.cval) == 0 {
 		asis(c)
 	}
 	return c.cval

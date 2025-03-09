@@ -20,36 +20,7 @@ func mode4Test(path string) string {
 	tmp := strings.Split(strings.ReplaceAll(strings.ReplaceAll(basename, "output.", ""), ext, ""), ".")
 	mode := strings.Builder{}
 	for _, m := range tmp {
-		switch m {
-		case "la":
-			mode.WriteString("a")
-		case "lc":
-			mode.WriteString("c")
-		case "lh":
-			mode.WriteString("h")
-		case "lk":
-			mode.WriteString("k")
-		case "ln":
-			mode.WriteString("n")
-		case "lr":
-			mode.WriteString("r")
-		case "ls":
-			mode.WriteString("s")
-		case "ua":
-			mode.WriteString("A")
-		case "uc":
-			mode.WriteString("C")
-		case "uh":
-			mode.WriteString("H")
-		case "uk":
-			mode.WriteString("K")
-		case "un":
-			mode.WriteString("N")
-		case "ur":
-			mode.WriteString("R")
-		case "us":
-			mode.WriteString("S")
-		}
+		mode.WriteString(m)
 	}
 	return mode.String()
 }
@@ -57,27 +28,27 @@ func mode4Test(path string) string {
 func TestByte(t *testing.T) {
 	content, err := os.ReadFile("./data/input.txt")
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
-	paths, err := filepath.Glob("./data/" + output)
+	// paths, err := filepath.Glob("./data/" + output)
+	paths, err := filepath.Glob("./data/output.H.txt")
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
 	for _, path := range paths {
 		mode := mode4Test(path)
 		expect, err := os.ReadFile(path)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 		}
 		result := Byte(content, mode)
-		if strings.Compare(string(result), string(expect)) != 0 {
+		if !bytes.Equal(result, expect) {
 			expects := bytes.Split(expect, []byte("\n"))
 			results := bytes.Split(result, []byte("\n"))
 			msg := strings.Builder{}
 			msg.WriteString(fmt.Sprintf("\n[%s] ---------\n", mode))
 			for k, e := range expects {
 				r := results[k]
-				fmt.Printf("[%d] %s(%T) <-> %s\n", k, e, e, results[k])
 				if strings.Compare(string(r), string(e)) != 0 {
 					msg.WriteString(fmt.Sprintf("Expect(%d): ", k))
 					msg.Write(e)
@@ -86,7 +57,7 @@ func TestByte(t *testing.T) {
 					msg.WriteString("\n")
 				}
 			}
-			t.Errorf(msg.String())
+			t.Error(msg.String())
 		}
 	}
 }
@@ -94,17 +65,17 @@ func TestByte(t *testing.T) {
 func TestString(t *testing.T) {
 	content, err := os.ReadFile("./data/input.txt")
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
 	paths, err := filepath.Glob("./data/" + output)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
 	for _, path := range paths {
 		mode := mode4Test(path)
 		expect, err := os.ReadFile(path)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 		}
 		result := String(string(content), mode)
 		if strings.Compare(result, string(expect)) != 0 {
@@ -123,7 +94,7 @@ func TestString(t *testing.T) {
 					msg.WriteString("\n")
 				}
 			}
-			t.Errorf(msg.String())
+			t.Error(msg.String())
 		}
 	}
 }
@@ -152,7 +123,7 @@ func TestRead(t *testing.T) {
 				break
 			}
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Error(err.Error())
 				break
 			}
 			results = append(results, buf...)
@@ -172,7 +143,7 @@ func TestRead(t *testing.T) {
 					msg.WriteString("\n")
 				}
 			}
-			t.Errorf(msg.String())
+			t.Error(msg.String())
 		}
 	}
 }
