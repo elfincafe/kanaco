@@ -1,18 +1,16 @@
-version: "3.3"
+version: "3.9"
 services:
   app:
-    image: kanaco:dev
+    image: localhost/kanaco:dev
     container_name: KanaCo
     build:
-      context: .
-      dockerfile: ./Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     tty: true
     networks:
       - kanaco
     volumes:
-      - type: bind
-        source: ..
-        target: /var/opt/src
+      - ..:/usr/local/kanaco/src
     environment:
       - TZ=Asia/Tokyo
       - EDITOR=vi

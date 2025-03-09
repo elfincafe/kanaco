@@ -1,25 +1,32 @@
-FROM alpine:3.16
+FROM docker.io/library/alpine:3.21.2
 
-LABEL version="0.1.0"
-LABEL description="KanaCo Kana Converter Library"
-LABEL maintainer="Takamichi Seki <takamichi.seki@elfincafe.com>"
+ENV TZ Asia/Tokyo
+ENV EDITOR vi
+ENV GOPATH /usr/local/kanaco
+ENV PATH ${GOPATH}/bin:${PATH}
+ENV PS1 "[\A]\u@kanaco:\W\\$ "
+ENV STAGE dev
 
-RUN apk update && apk upgrade && apk add doas vim tzdata gcc make musl-dev go go-doc cython cython-doc python3 python3-doc py3-pytest
-RUN cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-RUN apk del tzdata
-RUN rm -f /var/cache/apk/*
+RUN apk update && \
+    apk upgrade && \
+    apk add doas \
+            vim \
+            tzdata \
+            clang \
+            make \
+            musl-dev \
+            go \
+            cython \
+            python3 \
+            py3-pytest \
+            cunit-dev && \
+    rm -f /var/cache/apk/* && \
+    adduser -u 2000 -D -h /home/dev -G users dev && \
+    addgroup dev wheel && \
+    echo -e "permit nopass :root\npermit nopass :wheel" > /etc/doas/d/doas.conf && \
+    mkdir -p ${GOPATH}/bin ${GOPATH}/pkg && \
+    chown -R dev:users ${GOPATH}/bin ${GOPATH}/pkg
 
-RUN addgroup -g 50 staff
-RUN adduser -u 2000 -D -h /home/zlkv -G staff zlkv
-RUN addgroup zlkv wheel
-RUN echo "permit nopass :root" >> /etc/doas.d/doas.conf
-RUN echo "permit nopass :wheel" >> /etc/doas.d/doas.conf
-ENV GOPATH /var/opt
-ENV PATH $GOPATH/bin:$PATH
-RUN mkdir -p "$GOPATH/pkg" "$GOPATH/bin" && chown -R zlkv:staff "$GOPATH/pkg" "$GOPATH/bin"
-WORKDIR $GOPATH/src
-RUN touch ~/.profile
-RUN echo 'export PS1="[\A]\u@kanaco:\W\\$ "' >> ~/.profile
-USER zlkv
-RUN touch ~/.profile
-RUN echo 'export PS1="[\A]\u@kanaco:\W\\$ "' >> ~/.profile
+USER dev
+RUN go install golang.org/x/tools/cmd/goimports@latest
+WORKDIR ${GOPATH}/src
