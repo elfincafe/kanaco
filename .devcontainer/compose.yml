@@ -1,8 +1,7 @@
-version: "3.9"
 services:
   app:
     image: localhost/kanaco:dev
-    container_name: KanaCo
+    container_name: kanaco-dev
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
