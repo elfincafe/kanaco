@@ -3,9 +3,9 @@ from libc.stdlib cimport free
 cdef extern from "kanaco.h":
     char *convert(char *s, int length, char *mode, int mode_len)
 
-def conv(s, str m):
+def conv(s, str m) -> str:
     cdef char *tmp = NULL
-    cdef bytes ret
+    cdef str ret
     try:
         t = type(s)
         if t is str:
@@ -16,7 +16,7 @@ def conv(s, str m):
             tmp = convert(s, len(s), <bytes>m.encode(), len(m))
         else:
             raise TypeError("Invalid Data Type.")
-        ret = <bytes>tmp
+        ret = tmp.decode("utf-8", errors="ignore")
     finally:
         free(tmp)
-    return <str>ret
+    return ret

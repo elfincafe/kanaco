@@ -259,306 +259,306 @@ void lower_k(character *c) {
   if (c1 == 0x80) {
     switch (c2) {
       case 0x81:
-        strncpy(c->cval, "､", c->clen);
+        strncpy(c->cval, "､", c->clen + 1);
         break; /* 、 */
       case 0x82:
-        strncpy(c->cval, "｡", c->clen);
+        strncpy(c->cval, "｡", c->clen + 1);
         break; /* 。 */
     }
   } else if (c1 == 0x82) {
     switch (c2) {
       case 0x9b:
-        strncpy(c->cval, "ﾞ", c->clen);
+        strncpy(c->cval, "ﾞ", c->clen + 1);
         break; /* ゛ */
       case 0x9c:
-        strncpy(c->cval, "ﾟ", c->clen);
+        strncpy(c->cval, "ﾟ", c->clen + 1);
         break; /* ゜ */
       case 0xa1:
-        strncpy(c->cval, "ｧ", c->clen);
+        strncpy(c->cval, "ｧ", c->clen + 1);
         break;
       case 0xa2:
-        strncpy(c->cval, "ｱ", c->clen);
+        strncpy(c->cval, "ｱ", c->clen + 1);
         break;
       case 0xa3:
-        strncpy(c->cval, "ｨ", c->clen);
+        strncpy(c->cval, "ｨ", c->clen + 1);
         break;
       case 0xa4:
-        strncpy(c->cval, "ｲ", c->clen);
+        strncpy(c->cval, "ｲ", c->clen + 1);
         break;
       case 0xa5:
-        strncpy(c->cval, "ｩ", c->clen);
+        strncpy(c->cval, "ｩ", c->clen + 1);
         break;
       case 0xa6:
-        strncpy(c->cval, "ｳ", c->clen);
+        strncpy(c->cval, "ｳ", c->clen + 1);
         break;
       case 0xa7:
-        strncpy(c->cval, "ｪ", c->clen);
+        strncpy(c->cval, "ｪ", c->clen + 1);
         break;
       case 0xa8:
-        strncpy(c->cval, "ｴ", c->clen);
+        strncpy(c->cval, "ｴ", c->clen + 1);
         break;
       case 0xa9:
-        strncpy(c->cval, "ｫ", c->clen);
+        strncpy(c->cval, "ｫ", c->clen + 1);
         break;
       case 0xaa:
-        strncpy(c->cval, "ｵ", c->clen);
+        strncpy(c->cval, "ｵ", c->clen + 1);
         break;
       case 0xab:
-        strncpy(c->cval, "ｶ", c->clen);
+        strncpy(c->cval, "ｶ", c->clen + 1);
         break;
       case 0xac:
         c->clen = 6;
-        strncpy(c->cval, "ｶﾞ", c->clen);
+        strncpy(c->cval, "ｶﾞ", c->clen + 1);
         break;
       case 0xad:
-        strncpy(c->cval, "ｷ", c->clen);
+        strncpy(c->cval, "ｷ", c->clen + 1);
         break;
       case 0xae:
         c->clen = 6;
-        strncpy(c->cval, "ｷﾞ", c->clen);
+        strncpy(c->cval, "ｷﾞ", c->clen + 1);
         break;
       case 0xaf:
-        strncpy(c->cval, "ｸ", c->clen);
+        strncpy(c->cval, "ｸ", c->clen + 1);
         break;
       case 0xb0:
         c->clen = 6;
-        strncpy(c->cval, "ｸﾞ", c->clen);
+        strncpy(c->cval, "ｸﾞ", c->clen + 1);
         break;
       case 0xb1:
-        strncpy(c->cval, "ｹ", c->clen);
+        strncpy(c->cval, "ｹ", c->clen + 1);
         break;
       case 0xb2:
         c->clen = 6;
-        strncpy(c->cval, "ｹﾞ", c->clen);
+        strncpy(c->cval, "ｹﾞ", c->clen + 1);
         break;
       case 0xb3:
-        strncpy(c->cval, "ｺ", c->clen);
+        strncpy(c->cval, "ｺ", c->clen + 1);
         break;
       case 0xb4:
         c->clen = 6;
-        strncpy(c->cval, "ｺﾞ", c->clen);
+        strncpy(c->cval, "ｺﾞ", c->clen + 1);
         break;
       case 0xb5:
-        strncpy(c->cval, "ｻ", c->clen);
+        strncpy(c->cval, "ｻ", c->clen + 1);
         break;
       case 0xb6:
         c->clen = 6;
-        strncpy(c->cval, "ｻﾞ", c->clen);
+        strncpy(c->cval, "ｻﾞ", c->clen + 1);
         break;
       case 0xb7:
-        strncpy(c->cval, "ｼ", c->clen);
+        strncpy(c->cval, "ｼ", c->clen + 1);
         break;
       case 0xb8:
         c->clen = 6;
-        strncpy(c->cval, "ｼﾞ", c->clen);
+        strncpy(c->cval, "ｼﾞ", c->clen + 1);
         break;
       case 0xb9:
-        strncpy(c->cval, "ｽ", c->clen);
+        strncpy(c->cval, "ｽ", c->clen + 1);
         break;
       case 0xba:
         c->clen = 6;
-        strncpy(c->cval, "ｽﾞ", c->clen);
+        strncpy(c->cval, "ｽﾞ", c->clen + 1);
         break;
       case 0xbb:
-        strncpy(c->cval, "ｾ", c->clen);
+        strncpy(c->cval, "ｾ", c->clen + 1);
         break;
       case 0xbc:
         c->clen = 6;
-        strncpy(c->cval, "ｾﾞ", c->clen);
+        strncpy(c->cval, "ｾﾞ", c->clen + 1);
         break;
       case 0xbd:
-        strncpy(c->cval, "ｿ", c->clen);
+        strncpy(c->cval, "ｿ", c->clen + 1);
         break;
       case 0xbe:
         c->clen = 6;
-        strncpy(c->cval, "ｿﾞ", c->clen);
+        strncpy(c->cval, "ｿﾞ", c->clen + 1);
         break;
       case 0xbf:
-        strncpy(c->cval, "ﾀ", c->clen);
+        strncpy(c->cval, "ﾀ", c->clen + 1);
         break;
     }
   } else if (c1 == 0x83) {
     switch (c2) {
       case 0x80:
         c->clen = 6;
-        strncpy(c->cval, "ﾀﾞ", c->clen);
+        strncpy(c->cval, "ﾀﾞ", c->clen + 1);
         break;
       case 0x81:
-        strncpy(c->cval, "ﾁ", c->clen);
+        strncpy(c->cval, "ﾁ", c->clen + 1);
         break;
       case 0x82:
         c->clen = 6;
-        strncpy(c->cval, "ﾁﾞ", c->clen);
+        strncpy(c->cval, "ﾁﾞ", c->clen + 1);
         break;
       case 0x83:
-        strncpy(c->cval, "ｯ", c->clen);
+        strncpy(c->cval, "ｯ", c->clen + 1);
         break;
       case 0x84:
-        strncpy(c->cval, "ﾂ", c->clen);
+        strncpy(c->cval, "ﾂ", c->clen + 1);
         break;
       case 0x85:
         c->clen = 6;
-        strncpy(c->cval, "ﾂﾞ", c->clen);
+        strncpy(c->cval, "ﾂﾞ", c->clen + 1);
         break;
       case 0x86:
-        strncpy(c->cval, "ﾃ", c->clen);
+        strncpy(c->cval, "ﾃ", c->clen + 1);
         break;
       case 0x87:
         c->clen = 6;
-        strncpy(c->cval, "ﾃﾞ", c->clen);
+        strncpy(c->cval, "ﾃﾞ", c->clen + 1);
         break;
       case 0x88:
-        strncpy(c->cval, "ﾄ", c->clen);
+        strncpy(c->cval, "ﾄ", c->clen + 1);
         break;
       case 0x89:
         c->clen = 6;
-        strncpy(c->cval, "ﾄﾞ", c->clen);
+        strncpy(c->cval, "ﾄﾞ", c->clen + 1);
         break;
       case 0x8a:
-        strncpy(c->cval, "ﾅ", c->clen);
+        strncpy(c->cval, "ﾅ", c->clen + 1);
         break;
       case 0x8b:
-        strncpy(c->cval, "ﾆ", c->clen);
+        strncpy(c->cval, "ﾆ", c->clen + 1);
         break;
       case 0x8c:
-        strncpy(c->cval, "ﾇ", c->clen);
+        strncpy(c->cval, "ﾇ", c->clen + 1);
         break;
       case 0x8d:
-        strncpy(c->cval, "ﾈ", c->clen);
+        strncpy(c->cval, "ﾈ", c->clen + 1);
         break;
       case 0x8e:
-        strncpy(c->cval, "ﾉ", c->clen);
+        strncpy(c->cval, "ﾉ", c->clen + 1);
         break;
       case 0x8f:
-        strncpy(c->cval, "ﾊ", c->clen);
+        strncpy(c->cval, "ﾊ", c->clen + 1);
         break;
       case 0x90:
         c->clen = 6;
-        strncpy(c->cval, "ﾊﾞ", c->clen);
+        strncpy(c->cval, "ﾊﾞ", c->clen + 1);
         break;
       case 0x91:
         c->clen = 6;
-        strncpy(c->cval, "ﾊﾟ", c->clen);
+        strncpy(c->cval, "ﾊﾟ", c->clen + 1);
         break;
       case 0x92:
-        strncpy(c->cval, "ﾋ", c->clen);
+        strncpy(c->cval, "ﾋ", c->clen + 1);
         break;
       case 0x93:
         c->clen = 6;
-        strncpy(c->cval, "ﾋﾞ", c->clen);
+        strncpy(c->cval, "ﾋﾞ", c->clen + 1);
         break;
       case 0x94:
         c->clen = 6;
-        strncpy(c->cval, "ﾋﾟ", c->clen);
+        strncpy(c->cval, "ﾋﾟ", c->clen + 1);
         break;
       case 0x95:
-        strncpy(c->cval, "ﾌ", c->clen);
+        strncpy(c->cval, "ﾌ", c->clen + 1);
         break;
       case 0x96:
         c->clen = 6;
-        strncpy(c->cval, "ﾌﾞ", c->clen);
+        strncpy(c->cval, "ﾌﾞ", c->clen + 1);
         break;
       case 0x97:
         c->clen = 6;
-        strncpy(c->cval, "ﾌﾟ", c->clen);
+        strncpy(c->cval, "ﾌﾟ", c->clen + 1);
         break;
       case 0x98:
-        strncpy(c->cval, "ﾍ", c->clen);
+        strncpy(c->cval, "ﾍ", c->clen + 1);
         break;
       case 0x99:
         c->clen = 6;
-        strncpy(c->cval, "ﾍﾞ", c->clen);
+        strncpy(c->cval, "ﾍﾞ", c->clen + 1);
         break;
       case 0x9a:
         c->clen = 6;
-        strncpy(c->cval, "ﾍﾟ", c->clen);
+        strncpy(c->cval, "ﾍﾟ", c->clen + 1);
         break;
       case 0x9b:
-        strncpy(c->cval, "ﾎ", c->clen);
+        strncpy(c->cval, "ﾎ", c->clen + 1);
         break;
       case 0x9c:
         c->clen = 6;
-        strncpy(c->cval, "ﾎﾞ", c->clen);
+        strncpy(c->cval, "ﾎﾞ", c->clen + 1);
         break;
       case 0x9d:
         c->clen = 6;
-        strncpy(c->cval, "ﾎﾟ", c->clen);
+        strncpy(c->cval, "ﾎﾟ", c->clen + 1);
         break;
       case 0x9e:
-        strncpy(c->cval, "ﾏ", c->clen);
+        strncpy(c->cval, "ﾏ", c->clen + 1);
         break;
       case 0x9f:
-        strncpy(c->cval, "ﾐ", c->clen);
+        strncpy(c->cval, "ﾐ", c->clen + 1);
         break;
       case 0xa0:
-        strncpy(c->cval, "ﾑ", c->clen);
+        strncpy(c->cval, "ﾑ", c->clen + 1);
         break;
       case 0xa1:
-        strncpy(c->cval, "ﾒ", c->clen);
+        strncpy(c->cval, "ﾒ", c->clen + 1);
         break;
       case 0xa2:
-        strncpy(c->cval, "ﾓ", c->clen);
+        strncpy(c->cval, "ﾓ", c->clen + 1);
         break;
       case 0xa3:
-        strncpy(c->cval, "ｬ", c->clen);
+        strncpy(c->cval, "ｬ", c->clen + 1);
         break;
       case 0xa4:
-        strncpy(c->cval, "ﾔ", c->clen);
+        strncpy(c->cval, "ﾔ", c->clen + 1);
         break;
       case 0xa5:
-        strncpy(c->cval, "ｭ", c->clen);
+        strncpy(c->cval, "ｭ", c->clen + 1);
         break;
       case 0xa6:
-        strncpy(c->cval, "ﾕ", c->clen);
+        strncpy(c->cval, "ﾕ", c->clen + 1);
         break;
       case 0xa7:
-        strncpy(c->cval, "ｮ", c->clen);
+        strncpy(c->cval, "ｮ", c->clen + 1);
         break;
       case 0xa8:
-        strncpy(c->cval, "ﾖ", c->clen);
+        strncpy(c->cval, "ﾖ", c->clen + 1);
         break;
       case 0xa9:
-        strncpy(c->cval, "ﾗ", c->clen);
+        strncpy(c->cval, "ﾗ", c->clen + 1);
         break;
       case 0xaa:
-        strncpy(c->cval, "ﾘ", c->clen);
+        strncpy(c->cval, "ﾘ", c->clen + 1);
         break;
       case 0xab:
-        strncpy(c->cval, "ﾙ", c->clen);
+        strncpy(c->cval, "ﾙ", c->clen + 1);
         break;
       case 0xac:
-        strncpy(c->cval, "ﾚ", c->clen);
+        strncpy(c->cval, "ﾚ", c->clen + 1);
         break;
       case 0xad:
-        strncpy(c->cval, "ﾛ", c->clen);
+        strncpy(c->cval, "ﾛ", c->clen + 1);
         break;
       case 0xae:
-        strncpy(c->cval, "ﾜ", c->clen);
+        strncpy(c->cval, "ﾜ", c->clen + 1);
         break;
       case 0xaf:
-        strncpy(c->cval, "ﾜ", c->clen);
+        strncpy(c->cval, "ﾜ", c->clen + 1);
         break;
       case 0xb0:
-        strncpy(c->cval, "ｲ", c->clen);
+        strncpy(c->cval, "ｲ", c->clen + 1);
         break;
       case 0xb1:
-        strncpy(c->cval, "ｴ", c->clen);
+        strncpy(c->cval, "ｴ", c->clen + 1);
         break;
       case 0xb2:
-        strncpy(c->cval, "ｦ", c->clen);
+        strncpy(c->cval, "ｦ", c->clen + 1);
         break;
       case 0xb3:
-        strncpy(c->cval, "ﾝ", c->clen);
+        strncpy(c->cval, "ﾝ", c->clen + 1);
         break;
       case 0xb4:
         c->clen = 6;
-        strncpy(c->cval, "ｳﾞ", c->clen);
+        strncpy(c->cval, "ｳﾞ", c->clen + 1);
         break;
       case 0xbb:
-        strncpy(c->cval, "･", c->clen);
+        strncpy(c->cval, "･", c->clen + 1);
         break; /* ・ */
       case 0xbc:
-        strncpy(c->cval, "ｰ", c->clen);
+        strncpy(c->cval, "ｰ", c->clen + 1);
         break; /* ー */
     }
   }
@@ -581,226 +581,226 @@ void upper_k(character *c) {
   if (c1 == 0xbd) {
     switch (c2) {
       case 0xa1: /* ｡ */
-        strncpy(c->cval, "。", c->clen);
+        strncpy(c->cval, "。", c->clen + 1);
         break;
       case 0xa2: /* ｢ */
-        strncpy(c->cval, "「", c->clen);
+        strncpy(c->cval, "「", c->clen + 1);
         break;
       case 0xa3: /* ｣ */
-        strncpy(c->cval, "」", c->clen);
+        strncpy(c->cval, "」", c->clen + 1);
         break;
       case 0xa4: /* ､ */
-        strncpy(c->cval, "、", c->clen);
+        strncpy(c->cval, "、", c->clen + 1);
         break;
       case 0xa5: /* ･ */
-        strncpy(c->cval, "・", c->clen);
+        strncpy(c->cval, "・", c->clen + 1);
         break;
       case 0xa6:
-        strncpy(c->cval, "ヲ", c->clen);
+        strncpy(c->cval, "ヲ", c->clen + 1);
         break;
       case 0xa7:
-        strncpy(c->cval, "ァ", c->clen);
+        strncpy(c->cval, "ァ", c->clen + 1);
         break;
       case 0xa8:
-        strncpy(c->cval, "ィ", c->clen);
+        strncpy(c->cval, "ィ", c->clen + 1);
         break;
       case 0xa9:
-        strncpy(c->cval, "ゥ", c->clen);
+        strncpy(c->cval, "ゥ", c->clen + 1);
         break;
       case 0xaa:
-        strncpy(c->cval, "ェ", c->clen);
+        strncpy(c->cval, "ェ", c->clen + 1);
         break;
       case 0xab:
-        strncpy(c->cval, "ォ", c->clen);
+        strncpy(c->cval, "ォ", c->clen + 1);
         break;
       case 0xac:
-        strncpy(c->cval, "ャ", c->clen);
+        strncpy(c->cval, "ャ", c->clen + 1);
         break;
       case 0xad:
-        strncpy(c->cval, "ュ", c->clen);
+        strncpy(c->cval, "ュ", c->clen + 1);
         break;
       case 0xae:
-        strncpy(c->cval, "ョ", c->clen);
+        strncpy(c->cval, "ョ", c->clen + 1);
         break;
       case 0xaf:
-        strncpy(c->cval, "ッ", c->clen);
+        strncpy(c->cval, "ッ", c->clen + 1);
         break;
       case 0xb0: /* ｰ */
-        strncpy(c->cval, "ー", c->clen);
+        strncpy(c->cval, "ー", c->clen + 1);
         break;
       case 0xb1:
-        strncpy(c->cval, "ア", c->clen);
+        strncpy(c->cval, "ア", c->clen + 1);
         break;
       case 0xb2:
-        strncpy(c->cval, "イ", c->clen);
+        strncpy(c->cval, "イ", c->clen + 1);
         break;
       case 0xb3:
-        strncpy(c->cval, (c5 == 0x9e ? "ヴ" : "ウ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ヴ" : "ウ"), c->clen + 1);
         break;
       case 0xb4:
-        strncpy(c->cval, "エ", c->clen);
+        strncpy(c->cval, "エ", c->clen + 1);
         break;
       case 0xb5:
-        strncpy(c->cval, "オ", c->clen);
+        strncpy(c->cval, "オ", c->clen + 1);
         break;
       case 0xb6:
-        strncpy(c->cval, (c5 == 0x9e ? "ガ" : "カ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ガ" : "カ"), c->clen + 1);
         break;
       case 0xb7:
-        strncpy(c->cval, (c5 == 0x9e ? "ギ" : "キ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ギ" : "キ"), c->clen + 1);
         break;
       case 0xb8:
-        strncpy(c->cval, (c5 == 0x9e ? "グ" : "ク"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "グ" : "ク"), c->clen + 1);
         break;
       case 0xb9:
-        strncpy(c->cval, (c5 == 0x9e ? "ゲ" : "ケ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ゲ" : "ケ"), c->clen + 1);
         break;
       case 0xba:
-        strncpy(c->cval, (c5 == 0x9e ? "ゴ" : "コ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ゴ" : "コ"), c->clen + 1);
         break;
       case 0xbb:
-        strncpy(c->cval, (c5 == 0x9e ? "ザ" : "サ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ザ" : "サ"), c->clen + 1);
         break;
       case 0xbc:
-        strncpy(c->cval, (c5 == 0x9e ? "ジ" : "シ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ジ" : "シ"), c->clen + 1);
         break;
       case 0xbd:
-        strncpy(c->cval, (c5 == 0x9e ? "ズ" : "ス"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ズ" : "ス"), c->clen + 1);
         break;
       case 0xbe:
-        strncpy(c->cval, (c5 == 0x9e ? "ゼ" : "セ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ゼ" : "セ"), c->clen + 1);
         break;
       case 0xbf:
-        strncpy(c->cval, (c5 == 0x9e ? "ゾ" : "ソ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ゾ" : "ソ"), c->clen + 1);
         break;
     }
   } else if (c1 == 0xbe) {
     switch (c2) {
       case 0x80:
-        strncpy(c->cval, (c5 == 0x9e ? "ダ" : "タ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ダ" : "タ"), c->clen + 1);
         break;
       case 0x81:
-        strncpy(c->cval, (c5 == 0x9e ? "ヂ" : "チ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ヂ" : "チ"), c->clen + 1);
         break;
       case 0x82:
-        strncpy(c->cval, (c5 == 0x9e ? "ヅ" : "ツ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ヅ" : "ツ"), c->clen + 1);
         break;
       case 0x83:
-        strncpy(c->cval, (c5 == 0x9e ? "デ" : "テ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "デ" : "テ"), c->clen + 1);
         break;
       case 0x84:
-        strncpy(c->cval, (c5 == 0x9e ? "ド" : "ト"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ド" : "ト"), c->clen + 1);
         break;
       case 0x85:
-        strncpy(c->cval, "ナ", c->clen);
+        strncpy(c->cval, "ナ", c->clen + 1);
         break;
       case 0x86:
-        strncpy(c->cval, "ニ", c->clen);
+        strncpy(c->cval, "ニ", c->clen + 1);
         break;
       case 0x87:
-        strncpy(c->cval, "ヌ", c->clen);
+        strncpy(c->cval, "ヌ", c->clen + 1);
         break;
       case 0x88:
-        strncpy(c->cval, "ネ", c->clen);
+        strncpy(c->cval, "ネ", c->clen + 1);
         break;
       case 0x89:
-        strncpy(c->cval, "ノ", c->clen);
+        strncpy(c->cval, "ノ", c->clen + 1);
         break;
       case 0x8a:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "バ", c->clen);
+          strncpy(c->cval, "バ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "パ", c->clen);
+          strncpy(c->cval, "パ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ハ", c->clen);
+          strncpy(c->cval, "ハ", c->clen + 1);
         }
         break;
       case 0x8b:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ビ", c->clen);
+          strncpy(c->cval, "ビ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ピ", c->clen);
+          strncpy(c->cval, "ピ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ヒ", c->clen);
+          strncpy(c->cval, "ヒ", c->clen + 1);
         }
         break;
       case 0x8c:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ブ", c->clen);
+          strncpy(c->cval, "ブ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "プ", c->clen);
+          strncpy(c->cval, "プ", c->clen + 1);
         } else {
-          strncpy(c->cval, "フ", c->clen);
+          strncpy(c->cval, "フ", c->clen + 1);
         }
         break;
       case 0x8d:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ベ", c->clen);
+          strncpy(c->cval, "ベ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ペ", c->clen);
+          strncpy(c->cval, "ペ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ヘ", c->clen);
+          strncpy(c->cval, "ヘ", c->clen + 1);
         }
         break;
       case 0x8e:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ボ", c->clen);
+          strncpy(c->cval, "ボ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ポ", c->clen);
+          strncpy(c->cval, "ポ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ホ", c->clen);
+          strncpy(c->cval, "ホ", c->clen + 1);
         }
         break;
       case 0x8f:
-        strncpy(c->cval, "マ", c->clen);
+        strncpy(c->cval, "マ", c->clen + 1);
         break;
       case 0x90:
-        strncpy(c->cval, "ミ", c->clen);
+        strncpy(c->cval, "ミ", c->clen + 1);
         break;
       case 0x91:
-        strncpy(c->cval, "ム", c->clen);
+        strncpy(c->cval, "ム", c->clen + 1);
         break;
       case 0x92:
-        strncpy(c->cval, "メ", c->clen);
+        strncpy(c->cval, "メ", c->clen + 1);
         break;
       case 0x93:
-        strncpy(c->cval, "モ", c->clen);
+        strncpy(c->cval, "モ", c->clen + 1);
         break;
       case 0x94:
-        strncpy(c->cval, "ヤ", c->clen);
+        strncpy(c->cval, "ヤ", c->clen + 1);
         break;
       case 0x95:
-        strncpy(c->cval, "ユ", c->clen);
+        strncpy(c->cval, "ユ", c->clen + 1);
         break;
       case 0x96:
-        strncpy(c->cval, "ヨ", c->clen);
+        strncpy(c->cval, "ヨ", c->clen + 1);
         break;
       case 0x97:
-        strncpy(c->cval, "ラ", c->clen);
+        strncpy(c->cval, "ラ", c->clen + 1);
         break;
       case 0x98:
-        strncpy(c->cval, "リ", c->clen);
+        strncpy(c->cval, "リ", c->clen + 1);
         break;
       case 0x99:
-        strncpy(c->cval, "ル", c->clen);
+        strncpy(c->cval, "ル", c->clen + 1);
         break;
       case 0x9a:
-        strncpy(c->cval, "レ", c->clen);
+        strncpy(c->cval, "レ", c->clen + 1);
         break;
       case 0x9b:
-        strncpy(c->cval, "ロ", c->clen);
+        strncpy(c->cval, "ロ", c->clen + 1);
         break;
       case 0x9c:
-        strncpy(c->cval, "ワ", c->clen);
+        strncpy(c->cval, "ワ", c->clen + 1);
         break;
       case 0x9d:
-        strncpy(c->cval, "ン", c->clen);
+        strncpy(c->cval, "ン", c->clen + 1);
         break;
       case 0x9e: /* ﾞ */
-        strncpy(c->cval, "゛", c->clen);
+        strncpy(c->cval, "゛", c->clen + 1);
         break;
       case 0x9f: /* ﾟ */
-        strncpy(c->cval, "゜", c->clen);
+        strncpy(c->cval, "゜", c->clen + 1);
         break;
     }
   }
@@ -821,305 +821,305 @@ void lower_h(character *c) {
   if (c1 == 0x80) {
     switch (c2) {
       case 0x81: /* 、 */
-        strncpy(c->cval, "､", c->clen);
+        strncpy(c->cval, "､", c->clen + 1);
         break;
       case 0x82: /* 。 */
-        strncpy(c->cval, "｡", c->clen);
+        strncpy(c->cval, "｡", c->clen + 1);
         break;
     }
   } else if (c1 == 0x81) {
     switch (c2) {
       case 0x81:
-        strncpy(c->cval, "ｧ", c->clen);
+        strncpy(c->cval, "ｧ", c->clen + 1);
         break;
       case 0x82:
-        strncpy(c->cval, "ｱ", c->clen);
+        strncpy(c->cval, "ｱ", c->clen + 1);
         break;
       case 0x83:
-        strncpy(c->cval, "ｨ", c->clen);
+        strncpy(c->cval, "ｨ", c->clen + 1);
         break;
       case 0x84:
-        strncpy(c->cval, "ｲ", c->clen);
+        strncpy(c->cval, "ｲ", c->clen + 1);
         break;
       case 0x85:
-        strncpy(c->cval, "ｩ", c->clen);
+        strncpy(c->cval, "ｩ", c->clen + 1);
         break;
       case 0x86:
-        strncpy(c->cval, "ｳ", c->clen);
+        strncpy(c->cval, "ｳ", c->clen + 1);
         break;
       case 0x87:
-        strncpy(c->cval, "ｪ", c->clen);
+        strncpy(c->cval, "ｪ", c->clen + 1);
         break;
       case 0x88:
-        strncpy(c->cval, "ｴ", c->clen);
+        strncpy(c->cval, "ｴ", c->clen + 1);
         break;
       case 0x89:
-        strncpy(c->cval, "ｫ", c->clen);
+        strncpy(c->cval, "ｫ", c->clen + 1);
         break;
       case 0x8a:
-        strncpy(c->cval, "ｵ", c->clen);
+        strncpy(c->cval, "ｵ", c->clen + 1);
         break;
       case 0x8b:
-        strncpy(c->cval, "ｶ", c->clen);
+        strncpy(c->cval, "ｶ", c->clen + 1);
         break;
       case 0x8c:
         c->clen = 6;
-        strncpy(c->cval, "ｶﾞ", c->clen);
+        strncpy(c->cval, "ｶﾞ", c->clen + 1);
         break;
       case 0x8d:
-        strncpy(c->cval, "ｷ", c->clen);
+        strncpy(c->cval, "ｷ", c->clen + 1);
         break;
       case 0x8e:
         c->clen = 6;
-        strncpy(c->cval, "ｷﾞ", c->clen);
+        strncpy(c->cval, "ｷﾞ", c->clen + 1);
         break;
       case 0x8f:
-        strncpy(c->cval, "ｸ", c->clen);
+        strncpy(c->cval, "ｸ", c->clen + 1);
         break;
       case 0x90:
         c->clen = 6;
-        strncpy(c->cval, "ｸﾞ", c->clen);
+        strncpy(c->cval, "ｸﾞ", c->clen + 1);
         break;
       case 0x91:
-        strncpy(c->cval, "ｹ", c->clen);
+        strncpy(c->cval, "ｹ", c->clen + 1);
         break;
       case 0x92:
         c->clen = 6;
-        strncpy(c->cval, "ｹﾞ", c->clen);
+        strncpy(c->cval, "ｹﾞ", c->clen + 1);
         break;
       case 0x93:
-        strncpy(c->cval, "ｺ", c->clen);
+        strncpy(c->cval, "ｺ", c->clen + 1);
         break;
       case 0x94:
         c->clen = 6;
-        strncpy(c->cval, "ｺﾞ", c->clen);
+        strncpy(c->cval, "ｺﾞ", c->clen + 1);
         break;
       case 0x95:
-        strncpy(c->cval, "ｻ", c->clen);
+        strncpy(c->cval, "ｻ", c->clen + 1);
         break;
       case 0x96:
         c->clen = 6;
-        strncpy(c->cval, "ｻﾞ", c->clen);
+        strncpy(c->cval, "ｻﾞ", c->clen + 1);
         break;
       case 0x97:
-        strncpy(c->cval, "ｼ", c->clen);
+        strncpy(c->cval, "ｼ", c->clen + 1);
         break;
       case 0x98:
         c->clen = 6;
-        strncpy(c->cval, "ｼﾞ", c->clen);
+        strncpy(c->cval, "ｼﾞ", c->clen + 1);
         break;
       case 0x99:
-        strncpy(c->cval, "ｽ", c->clen);
+        strncpy(c->cval, "ｽ", c->clen + 1);
         break;
       case 0x9a:
         c->clen = 6;
-        strncpy(c->cval, "ｽﾞ", c->clen);
+        strncpy(c->cval, "ｽﾞ", c->clen + 1);
         break;
       case 0x9b:
-        strncpy(c->cval, "ｾ", c->clen);
+        strncpy(c->cval, "ｾ", c->clen + 1);
         break;
       case 0x9c:
         c->clen = 6;
-        strncpy(c->cval, "ｾﾞ", c->clen);
+        strncpy(c->cval, "ｾﾞ", c->clen + 1);
         break;
       case 0x9d:
-        strncpy(c->cval, "ｿ", c->clen);
+        strncpy(c->cval, "ｿ", c->clen + 1);
         break;
       case 0x9e:
         c->clen = 6;
-        strncpy(c->cval, "ｿﾞ", c->clen);
+        strncpy(c->cval, "ｿﾞ", c->clen + 1);
         break;
       case 0x9f:
-        strncpy(c->cval, "ﾀ", c->clen);
+        strncpy(c->cval, "ﾀ", c->clen + 1);
         break;
       case 0xa0:
         c->clen = 6;
-        strncpy(c->cval, "ﾀﾞ", c->clen);
+        strncpy(c->cval, "ﾀﾞ", c->clen + 1);
         break;
       case 0xa1:
-        strncpy(c->cval, "ﾁ", c->clen);
+        strncpy(c->cval, "ﾁ", c->clen + 1);
         break;
       case 0xa2:
         c->clen = 6;
-        strncpy(c->cval, "ﾁﾞ", c->clen);
+        strncpy(c->cval, "ﾁﾞ", c->clen + 1);
         break;
       case 0xa3:
-        strncpy(c->cval, "ｯ", c->clen);
+        strncpy(c->cval, "ｯ", c->clen + 1);
         break;
       case 0xa4:
-        strncpy(c->cval, "ﾂ", c->clen);
+        strncpy(c->cval, "ﾂ", c->clen + 1);
         break;
       case 0xa5:
         c->clen = 6;
-        strncpy(c->cval, "ﾂﾞ", c->clen);
+        strncpy(c->cval, "ﾂﾞ", c->clen + 1);
         break;
       case 0xa6:
-        strncpy(c->cval, "ﾃ", c->clen);
+        strncpy(c->cval, "ﾃ", c->clen + 1);
         break;
       case 0xa7:
         c->clen = 6;
-        strncpy(c->cval, "ﾃﾞ", c->clen);
+        strncpy(c->cval, "ﾃﾞ", c->clen + 1);
         break;
       case 0xa8:
-        strncpy(c->cval, "ﾄ", c->clen);
+        strncpy(c->cval, "ﾄ", c->clen + 1);
         break;
       case 0xa9:
         c->clen = 6;
-        strncpy(c->cval, "ﾄﾞ", c->clen);
+        strncpy(c->cval, "ﾄﾞ", c->clen + 1);
         break;
       case 0xaa:
-        strncpy(c->cval, "ﾅ", c->clen);
+        strncpy(c->cval, "ﾅ", c->clen + 1);
         break;
       case 0xab:
-        strncpy(c->cval, "ﾆ", c->clen);
+        strncpy(c->cval, "ﾆ", c->clen + 1);
         break;
       case 0xac:
-        strncpy(c->cval, "ﾇ", c->clen);
+        strncpy(c->cval, "ﾇ", c->clen + 1);
         break;
       case 0xad:
-        strncpy(c->cval, "ﾈ", c->clen);
+        strncpy(c->cval, "ﾈ", c->clen + 1);
         break;
       case 0xae:
-        strncpy(c->cval, "ﾉ", c->clen);
+        strncpy(c->cval, "ﾉ", c->clen + 1);
         break;
       case 0xaf:
-        strncpy(c->cval, "ﾊ", c->clen);
+        strncpy(c->cval, "ﾊ", c->clen + 1);
         break;
       case 0xb0:
         c->clen = 6;
-        strncpy(c->cval, "ﾊﾞ", c->clen);
+        strncpy(c->cval, "ﾊﾞ", c->clen + 1);
         break;
       case 0xb1:
         c->clen = 6;
-        strncpy(c->cval, "ﾊﾟ", c->clen);
+        strncpy(c->cval, "ﾊﾟ", c->clen + 1);
         break;
       case 0xb2:
-        strncpy(c->cval, "ﾋ", c->clen);
+        strncpy(c->cval, "ﾋ", c->clen + 1);
         break;
       case 0xb3:
         c->clen = 6;
-        strncpy(c->cval, "ﾋﾞ", c->clen);
+        strncpy(c->cval, "ﾋﾞ", c->clen + 1);
         break;
       case 0xb4:
         c->clen = 6;
-        strncpy(c->cval, "ﾋﾟ", c->clen);
+        strncpy(c->cval, "ﾋﾟ", c->clen + 1);
         break;
       case 0xb5:
-        strncpy(c->cval, "ﾌ", c->clen);
+        strncpy(c->cval, "ﾌ", c->clen + 1);
         break;
       case 0xb6:
         c->clen = 6;
-        strncpy(c->cval, "ﾌﾞ", c->clen);
+        strncpy(c->cval, "ﾌﾞ", c->clen + 1);
         break;
       case 0xb7:
         c->clen = 6;
-        strncpy(c->cval, "ﾌﾟ", c->clen);
+        strncpy(c->cval, "ﾌﾟ", c->clen + 1);
         break;
       case 0xb8:
-        strncpy(c->cval, "ﾍ", c->clen);
+        strncpy(c->cval, "ﾍ", c->clen + 1);
         break;
       case 0xb9:
         c->clen = 6;
-        strncpy(c->cval, "ﾍﾞ", c->clen);
+        strncpy(c->cval, "ﾍﾞ", c->clen + 1);
         break;
       case 0xba:
         c->clen = 6;
-        strncpy(c->cval, "ﾍﾟ", c->clen);
+        strncpy(c->cval, "ﾍﾟ", c->clen + 1);
         break;
       case 0xbb:
-        strncpy(c->cval, "ﾎ", c->clen);
+        strncpy(c->cval, "ﾎ", c->clen + 1);
         break;
       case 0xbc:
         c->clen = 6;
-        strncpy(c->cval, "ﾎﾞ", c->clen);
+        strncpy(c->cval, "ﾎﾞ", c->clen + 1);
         break;
       case 0xbd:
         c->clen = 6;
-        strncpy(c->cval, "ﾎﾟ", c->clen);
+        strncpy(c->cval, "ﾎﾟ", c->clen + 1);
         break;
       case 0xbe:
-        strncpy(c->cval, "ﾏ", c->clen);
+        strncpy(c->cval, "ﾏ", c->clen + 1);
         break;
       case 0xbf:
-        strncpy(c->cval, "ﾐ", c->clen);
+        strncpy(c->cval, "ﾐ", c->clen + 1);
         break;
     }
   } else if (c1 == 0x82) {
     switch (c2) {
       case 0x80:
-        strncpy(c->cval, "ﾑ", c->clen);
+        strncpy(c->cval, "ﾑ", c->clen + 1);
         break;
       case 0x81:
-        strncpy(c->cval, "ﾒ", c->clen);
+        strncpy(c->cval, "ﾒ", c->clen + 1);
         break;
       case 0x82:
-        strncpy(c->cval, "ﾓ", c->clen);
+        strncpy(c->cval, "ﾓ", c->clen + 1);
         break;
       case 0x83:
-        strncpy(c->cval, "ｬ", c->clen);
+        strncpy(c->cval, "ｬ", c->clen + 1);
         break;
       case 0x84:
-        strncpy(c->cval, "ﾔ", c->clen);
+        strncpy(c->cval, "ﾔ", c->clen + 1);
         break;
       case 0x85:
-        strncpy(c->cval, "ｭ", c->clen);
+        strncpy(c->cval, "ｭ", c->clen + 1);
         break;
       case 0x86:
-        strncpy(c->cval, "ﾕ", c->clen);
+        strncpy(c->cval, "ﾕ", c->clen + 1);
         break;
       case 0x87:
-        strncpy(c->cval, "ｮ", c->clen);
+        strncpy(c->cval, "ｮ", c->clen + 1);
         break;
       case 0x88:
-        strncpy(c->cval, "ﾖ", c->clen);
+        strncpy(c->cval, "ﾖ", c->clen + 1);
         break;
       case 0x89:
-        strncpy(c->cval, "ﾗ", c->clen);
+        strncpy(c->cval, "ﾗ", c->clen + 1);
         break;
       case 0x8a:
-        strncpy(c->cval, "ﾘ", c->clen);
+        strncpy(c->cval, "ﾘ", c->clen + 1);
         break;
       case 0x8b:
-        strncpy(c->cval, "ﾙ", c->clen);
+        strncpy(c->cval, "ﾙ", c->clen + 1);
         break;
       case 0x8c:
-        strncpy(c->cval, "ﾚ", c->clen);
+        strncpy(c->cval, "ﾚ", c->clen + 1);
         break;
       case 0x8d:
-        strncpy(c->cval, "ﾛ", c->clen);
+        strncpy(c->cval, "ﾛ", c->clen + 1);
         break;
       case 0x8e:
-        strncpy(c->cval, "ﾜ", c->clen);
+        strncpy(c->cval, "ﾜ", c->clen + 1);
         break;
       case 0x8f:
-        strncpy(c->cval, "ﾜ", c->clen);
+        strncpy(c->cval, "ﾜ", c->clen + 1);
         break;
       case 0x90:
-        strncpy(c->cval, "ｲ", c->clen);
+        strncpy(c->cval, "ｲ", c->clen + 1);
         break;
       case 0x91:
-        strncpy(c->cval, "ｴ", c->clen);
+        strncpy(c->cval, "ｴ", c->clen + 1);
         break;
       case 0x92:
-        strncpy(c->cval, "ｦ", c->clen);
+        strncpy(c->cval, "ｦ", c->clen + 1);
         break;
       case 0x93:
-        strncpy(c->cval, "ﾝ", c->clen);
+        strncpy(c->cval, "ﾝ", c->clen + 1);
         break;
       case 0x9b: /* ゛ */
-        strncpy(c->cval, "ﾞ", c->clen);
+        strncpy(c->cval, "ﾞ", c->clen + 1);
         break;
       case 0x9c: /* ゜ */
-        strncpy(c->cval, "ﾟ", c->clen);
+        strncpy(c->cval, "ﾟ", c->clen + 1);
         break;
     }
   } else if (c1 == 0x83) {
     switch (c2) {
       case 0xbb: /* ・ */
-        strncpy(c->cval, "･", c->clen);
+        strncpy(c->cval, "･", c->clen + 1);
         break;
       case 0xbc: /* ー */
-        strncpy(c->cval, "ｰ", c->clen);
+        strncpy(c->cval, "ｰ", c->clen + 1);
         break;
     }
   }
@@ -1143,231 +1143,231 @@ void upper_h(character *c) {
   if (c1 == 0xbd) {
     switch (c2) {
       case 0xa1: /* ｡ */
-        strncpy(c->cval, "。", c->clen);
+        strncpy(c->cval, "。", c->clen + 1);
         break;
       case 0xa2: /* ｢ */
-        strncpy(c->cval, "「", c->clen);
+        strncpy(c->cval, "「", c->clen + 1);
         break;
       case 0xa3: /* ｣ */
-        strncpy(c->cval, "」", c->clen);
+        strncpy(c->cval, "」", c->clen + 1);
         break;
       case 0xa4: /* ､ */
-        strncpy(c->cval, "、", c->clen);
+        strncpy(c->cval, "、", c->clen + 1);
         break;
       case 0xa5: /* ･ */
-        strncpy(c->cval, "・", c->clen);
+        strncpy(c->cval, "・", c->clen + 1);
         break;
       case 0xa6:
-        strncpy(c->cval, "を", c->clen);
+        strncpy(c->cval, "を", c->clen + 1);
         break;
       case 0xa7:
-        strncpy(c->cval, "ぁ", c->clen);
+        strncpy(c->cval, "ぁ", c->clen + 1);
         break;
       case 0xa8:
-        strncpy(c->cval, "ぃ", c->clen);
+        strncpy(c->cval, "ぃ", c->clen + 1);
         break;
       case 0xa9:
-        strncpy(c->cval, "ぅ", c->clen);
+        strncpy(c->cval, "ぅ", c->clen + 1);
         break;
       case 0xaa:
-        strncpy(c->cval, "ぇ", c->clen);
+        strncpy(c->cval, "ぇ", c->clen + 1);
         break;
       case 0xab:
-        strncpy(c->cval, "ぉ", c->clen);
+        strncpy(c->cval, "ぉ", c->clen + 1);
         break;
       case 0xac:
-        strncpy(c->cval, "ゃ", c->clen);
+        strncpy(c->cval, "ゃ", c->clen + 1);
         break;
       case 0xad:
-        strncpy(c->cval, "ゅ", c->clen);
+        strncpy(c->cval, "ゅ", c->clen + 1);
         break;
       case 0xae:
-        strncpy(c->cval, "ょ", c->clen);
+        strncpy(c->cval, "ょ", c->clen + 1);
         break;
       case 0xaf:
-        strncpy(c->cval, "っ", c->clen);
+        strncpy(c->cval, "っ", c->clen + 1);
         break;
       case 0xb0: /* ｰ */
-        strncpy(c->cval, "ー", c->clen);
+        strncpy(c->cval, "ー", c->clen + 1);
         break;
       case 0xb1:
-        strncpy(c->cval, "あ", c->clen);
+        strncpy(c->cval, "あ", c->clen + 1);
         break;
       case 0xb2:
-        strncpy(c->cval, "い", c->clen);
+        strncpy(c->cval, "い", c->clen + 1);
         break;
       case 0xb3:
         if (is_voiced(c->cval, c->clen)) {
           c->clen = 6;
-          strncpy(c->cval, "う゛", c->clen);
+          strncpy(c->cval, "う゛", c->clen + 1);
         } else {
-          strncpy(c->cval, "う", c->clen);
+          strncpy(c->cval, "う", c->clen + 1);
         }
         break;
       case 0xb4:
-        strncpy(c->cval, "え", c->clen);
+        strncpy(c->cval, "え", c->clen + 1);
         break;
       case 0xb5:
-        strncpy(c->cval, "お", c->clen);
+        strncpy(c->cval, "お", c->clen + 1);
         break;
       case 0xb6:
-        strncpy(c->cval, (c5 == 0x9e ? "が" : "か"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "が" : "か"), c->clen + 1);
         break;
       case 0xb7:
-        strncpy(c->cval, (c5 == 0x9e ? "ぎ" : "き"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ぎ" : "き"), c->clen + 1);
         break;
       case 0xb8:
-        strncpy(c->cval, (c5 == 0x9e ? "ぐ" : "く"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ぐ" : "く"), c->clen + 1);
         break;
       case 0xb9:
-        strncpy(c->cval, (c5 == 0x9e ? "げ" : "け"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "げ" : "け"), c->clen + 1);
         break;
       case 0xba:
-        strncpy(c->cval, (c5 == 0x9e ? "ご" : "こ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ご" : "こ"), c->clen + 1);
         break;
       case 0xbb:
-        strncpy(c->cval, (c5 == 0x9e ? "ざ" : "さ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ざ" : "さ"), c->clen + 1);
         break;
       case 0xbc:
-        strncpy(c->cval, (c5 == 0x9e ? "じ" : "し"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "じ" : "し"), c->clen + 1);
         break;
       case 0xbd:
-        strncpy(c->cval, (c5 == 0x9e ? "ず" : "す"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ず" : "す"), c->clen + 1);
         break;
       case 0xbe:
-        strncpy(c->cval, (c5 == 0x9e ? "ぜ" : "せ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ぜ" : "せ"), c->clen + 1);
         break;
       case 0xbf:
-        strncpy(c->cval, (c5 == 0x9e ? "ぞ" : "そ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ぞ" : "そ"), c->clen + 1);
         break;
     }
   } else if (c1 == 0xbe) {
     switch (c2) {
       case 0x80:
-        strncpy(c->cval, (c5 == 0x9e ? "だ" : "た"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "だ" : "た"), c->clen + 1);
         break;
       case 0x81:
-        strncpy(c->cval, (c5 == 0x9e ? "ぢ" : "ち"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ぢ" : "ち"), c->clen + 1);
         break;
       case 0x82:
-        strncpy(c->cval, (c5 == 0x9e ? "づ" : "つ"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "づ" : "つ"), c->clen + 1);
         break;
       case 0x83:
-        strncpy(c->cval, (c5 == 0x9e ? "で" : "て"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "で" : "て"), c->clen + 1);
         break;
       case 0x84:
-        strncpy(c->cval, (c5 == 0x9e ? "ど" : "と"), c->clen);
+        strncpy(c->cval, (c5 == 0x9e ? "ど" : "と"), c->clen + 1);
         break;
       case 0x85:
-        strncpy(c->cval, "な", c->clen);
+        strncpy(c->cval, "な", c->clen + 1);
         break;
       case 0x86:
-        strncpy(c->cval, "に", c->clen);
+        strncpy(c->cval, "に", c->clen + 1);
         break;
       case 0x87:
-        strncpy(c->cval, "ぬ", c->clen);
+        strncpy(c->cval, "ぬ", c->clen + 1);
         break;
       case 0x88:
-        strncpy(c->cval, "ね", c->clen);
+        strncpy(c->cval, "ね", c->clen + 1);
         break;
       case 0x89:
-        strncpy(c->cval, "の", c->clen);
+        strncpy(c->cval, "の", c->clen + 1);
         break;
       case 0x8a:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ば", c->clen);
+          strncpy(c->cval, "ば", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ぱ", c->clen);
+          strncpy(c->cval, "ぱ", c->clen + 1);
         } else {
-          strncpy(c->cval, "は", c->clen);
+          strncpy(c->cval, "は", c->clen + 1);
         }
         break;
       case 0x8b:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "び", c->clen);
+          strncpy(c->cval, "び", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ぴ", c->clen);
+          strncpy(c->cval, "ぴ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ひ", c->clen);
+          strncpy(c->cval, "ひ", c->clen + 1);
         }
         break;
       case 0x8c:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ぶ", c->clen);
+          strncpy(c->cval, "ぶ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ぷ", c->clen);
+          strncpy(c->cval, "ぷ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ふ", c->clen);
+          strncpy(c->cval, "ふ", c->clen + 1);
         }
         break;
       case 0x8d:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "べ", c->clen);
+          strncpy(c->cval, "べ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ぺ", c->clen);
+          strncpy(c->cval, "ぺ", c->clen + 1);
         } else {
-          strncpy(c->cval, "へ", c->clen);
+          strncpy(c->cval, "へ", c->clen + 1);
         }
         break;
       case 0x8e:
         if (c5 == 0x9e) {
-          strncpy(c->cval, "ぼ", c->clen);
+          strncpy(c->cval, "ぼ", c->clen + 1);
         } else if (c5 == 0x9f) {
-          strncpy(c->cval, "ぽ", c->clen);
+          strncpy(c->cval, "ぽ", c->clen + 1);
         } else {
-          strncpy(c->cval, "ほ", c->clen);
+          strncpy(c->cval, "ほ", c->clen + 1);
         }
         break;
       case 0x8f:
-        strncpy(c->cval, "ま", c->clen);
+        strncpy(c->cval, "ま", c->clen + 1);
         break;
       case 0x90:
-        strncpy(c->cval, "み", c->clen);
+        strncpy(c->cval, "み", c->clen + 1);
         break;
       case 0x91:
-        strncpy(c->cval, "む", c->clen);
+        strncpy(c->cval, "む", c->clen + 1);
         break;
       case 0x92:
-        strncpy(c->cval, "め", c->clen);
+        strncpy(c->cval, "め", c->clen + 1);
         break;
       case 0x93:
-        strncpy(c->cval, "も", c->clen);
+        strncpy(c->cval, "も", c->clen + 1);
         break;
       case 0x94:
-        strncpy(c->cval, "や", c->clen);
+        strncpy(c->cval, "や", c->clen + 1);
         break;
       case 0x95:
-        strncpy(c->cval, "ゆ", c->clen);
+        strncpy(c->cval, "ゆ", c->clen + 1);
         break;
       case 0x96:
-        strncpy(c->cval, "よ", c->clen);
+        strncpy(c->cval, "よ", c->clen + 1);
         break;
       case 0x97:
-        strncpy(c->cval, "ら", c->clen);
+        strncpy(c->cval, "ら", c->clen + 1);
         break;
       case 0x98:
-        strncpy(c->cval, "り", c->clen);
+        strncpy(c->cval, "り", c->clen + 1);
         break;
       case 0x99:
-        strncpy(c->cval, "る", c->clen);
+        strncpy(c->cval, "る", c->clen + 1);
         break;
       case 0x9a:
-        strncpy(c->cval, "れ", c->clen);
+        strncpy(c->cval, "れ", c->clen + 1);
         break;
       case 0x9b:
-        strncpy(c->cval, "ろ", c->clen);
+        strncpy(c->cval, "ろ", c->clen + 1);
         break;
       case 0x9c:
-        strncpy(c->cval, "わ", c->clen);
+        strncpy(c->cval, "わ", c->clen + 1);
         break;
       case 0x9d:
-        strncpy(c->cval, "ん", c->clen);
+        strncpy(c->cval, "ん", c->clen + 1);
         break;
       case 0x9e: /* ﾞ */
-        strncpy(c->cval, "゛", c->clen);
+        strncpy(c->cval, "゛", c->clen + 1);
         break;
       case 0x9f: /* ﾟ */
-        strncpy(c->cval, "゜", c->clen);
+        strncpy(c->cval, "゜", c->clen + 1);
         break;
     }
   }

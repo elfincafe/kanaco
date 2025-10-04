@@ -17,7 +17,9 @@
 .idea/
 .vscode/
 .build
-go.sum
+go.work
 *.a
 *.o
-
+.pytest_cache
+__pycache__
+**/__pycache__
