@@ -11,6 +11,10 @@ all: kanaco.static.o kanaco.shared.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o libkanaco.so kanaco.shared.o -shared
 
 clean:
-	$(RM) -f *.o *.a *.so
+	$(RM) -f *.o *.a *.so test_kanaco
 
-.PHONY: all clean
+test:
+	$(CC) -o test_kanaco test_kanaco.c  kanaco.c -lcunit
+	./test_kanaco
+
+.PHONY: all clean test

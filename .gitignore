@@ -18,8 +18,10 @@
 .vscode/
 .build
 go.work
+go.work.sum
 *.a
 *.o
+test_kanaco
 .pytest_cache
 __pycache__
 **/__pycache__

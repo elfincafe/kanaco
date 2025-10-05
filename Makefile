@@ -17,6 +17,7 @@ clean:
 	$(RM) -rf *.so .pytest_cache
 
 test:
+	$(MAKE) -C c test
 	$(MAKE) -C cython test
 
 c:
